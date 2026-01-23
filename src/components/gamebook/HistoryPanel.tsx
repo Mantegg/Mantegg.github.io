@@ -4,10 +4,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Page } from '@/types/gamebook';
 
 interface HistoryPanelProps {
-  history: number[];
-  currentPageId: number;
-  getPageById: (id: number) => Page | null;
-  onJumpToPage: (pageId: number) => void;
+  history: (number | string)[];
+  currentPageId: number | string;
+  getPageById: (id: number | string) => Page | null;
+  onJumpToPage: (pageId: number | string) => void;
 }
 
 export function HistoryPanel({ history, currentPageId, getPageById, onJumpToPage }: HistoryPanelProps) {

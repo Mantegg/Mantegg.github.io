@@ -8,6 +8,9 @@ import { InventoryPanel } from './InventoryPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { ChoiceButton } from './ChoiceButton';
 import { InputDialog } from './InputDialog';
+import { DicePopup } from './DicePopup';
+import { ThemeControls } from './ThemeControls';
+import { useTheme, useApplyThemeConfig } from '@/contexts/ThemeContext';
 
 interface StoryReaderProps {
   gamebookData: GamebookData;
@@ -16,9 +19,9 @@ interface StoryReaderProps {
   canChoose: (choice: Choice) => boolean;
   getChoiceRequirements: (choice: Choice) => string[];
   makeChoice: (choice: Choice, inputCorrect?: boolean) => void;
-  jumpToPage: (pageId: number) => void;
+  jumpToPage: (pageId: number | string) => void;
   restart: () => void;
-  getPageById: (id: number) => Page | null;
+  getPageById: (id: number | string) => Page | null;
   getSaveSlots: () => SaveSlot[];
   saveGame: (slotId: number, name: string) => void;
   loadGame: (slot: SaveSlot) => void;
@@ -49,6 +52,11 @@ export function StoryReader({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inputDialogOpen, setInputDialogOpen] = useState(false);
   const [pendingInputChoice, setPendingInputChoice] = useState<Choice | null>(null);
+
+  const { backgroundGradient } = useTheme();
+  
+  // Apply theme config from gamebook
+  useApplyThemeConfig(gamebookData.theme);
 
   if (!currentPage) {
     return (
@@ -81,23 +89,44 @@ export function StoryReader({
 
   const title = gamebookData.meta?.title || gamebookData.title || 'Untitled Story';
 
-  // Get section name if available
-  const sectionName = gamebookData.sections?.find(s => s.id === currentPage.section)?.name;
+  // Get section name if available (handle both formats)
+  const getSectionName = (): string | undefined => {
+    if (!currentPage.section) return undefined;
+    
+    // Check if sections is metadata array
+    if (gamebookData.sections) {
+      const section = gamebookData.sections.find(s => 
+        s.id === currentPage.section || String(s.id) === String(currentPage.section)
+      );
+      if (section) return section.name || section.title;
+    }
+    
+    return undefined;
+  };
+
+  const sectionName = getSectionName();
+
+  // Background style
+  const backgroundStyle = backgroundGradient
+    ? { background: backgroundGradient }
+    : undefined;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background" style={backgroundStyle}>
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <h1 className="font-serif font-semibold text-lg truncate">
-              {title}
+              {currentPage.title || title}
             </h1>
             {sectionName && (
               <p className="text-xs text-muted-foreground truncate">{sectionName}</p>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeControls />
+            <DicePopup stats={gameState.stats} />
             <Button variant="ghost" size="icon" onClick={restart} title="Restart">
               <RotateCcw className="h-4 w-4" />
             </Button>
@@ -130,10 +159,10 @@ export function StoryReader({
                     gamebookData={gamebookData}
                   />
                   <HistoryPanel
-                    history={gameState.history}
-                    currentPageId={gameState.currentPageId}
+                    history={gameState.history as (number | string)[]}
+                    currentPageId={gameState.currentPageId as number | string}
                     getPageById={getPageById}
-                    onJumpToPage={(pageId) => {
+                    onJumpToPage={(pageId: number | string) => {
                       jumpToPage(pageId);
                       setSidebarOpen(false);
                     }}
@@ -148,7 +177,7 @@ export function StoryReader({
       {/* Main content */}
       <main className="container max-w-3xl mx-auto px-4 py-8">
         <article className="prose prose-lg dark:prose-invert max-w-none">
-          <div className="bg-card rounded-lg p-6 md:p-8 shadow-sm border">
+          <div className="bg-card/90 backdrop-blur rounded-lg p-6 md:p-8 shadow-sm border">
             {/* Player name greeting (if set) */}
             {gameState.playerName && gameState.history.length === 1 && (
               <p className="text-muted-foreground text-sm mb-4">
@@ -156,10 +185,29 @@ export function StoryReader({
               </p>
             )}
 
+            {/* Page image */}
+            {currentPage.image && (
+              <div className="mb-6 -mx-2 md:-mx-4">
+                <img
+                  src={currentPage.image}
+                  alt=""
+                  className="w-full rounded-lg object-cover max-h-64 md:max-h-80"
+                  loading="lazy"
+                />
+              </div>
+            )}
+
             {/* Page text */}
             <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap text-lg">
               {currentPage.text}
             </div>
+
+            {/* Choice notes (e.g., combat instructions) */}
+            {currentPage.choices.some(c => c.note) && (
+              <div className="mt-4 p-3 bg-muted/50 rounded text-sm text-muted-foreground italic">
+                {currentPage.choices.find(c => c.note)?.note}
+              </div>
+            )}
 
             {/* Ending indicator */}
             {isEnding && (

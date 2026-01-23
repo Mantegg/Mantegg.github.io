@@ -2,6 +2,7 @@ import { useGamebook } from '@/hooks/useGamebook';
 import { WelcomeScreen } from '@/components/gamebook/WelcomeScreen';
 import { StoryReader } from '@/components/gamebook/StoryReader';
 import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const Index = () => {
   const {
@@ -27,38 +28,46 @@ const Index = () => {
   } = useGamebook();
 
   if (!isPlaying || !gamebookData) {
-    return <WelcomeScreen onLoadStory={loadStory} />;
+    return (
+      <ThemeProvider>
+        <WelcomeScreen onLoadStory={loadStory} />
+      </ThemeProvider>
+    );
   }
 
   // Show character setup if needed
   if (!gameState.isCharacterSetupComplete) {
     return (
-      <CharacterSetup
-        gamebookData={gamebookData}
-        onComplete={completeCharacterSetup}
-      />
+      <ThemeProvider>
+        <CharacterSetup
+          gamebookData={gamebookData}
+          onComplete={completeCharacterSetup}
+        />
+      </ThemeProvider>
     );
   }
 
   return (
-    <StoryReader
-      gamebookData={gamebookData}
-      gameState={gameState}
-      currentPage={getCurrentPage()}
-      canChoose={canChoose}
-      getChoiceRequirements={getChoiceRequirements}
-      makeChoice={makeChoice}
-      jumpToPage={jumpToPage}
-      restart={restart}
-      getPageById={getPageById}
-      getSaveSlots={getSaveSlots}
-      saveGame={saveGame}
-      loadGame={loadGame}
-      deleteSave={deleteSave}
-      exitStory={exitStory}
-      maxSaveSlots={maxSaveSlots}
-      canSave={canSave}
-    />
+    <ThemeProvider>
+      <StoryReader
+        gamebookData={gamebookData}
+        gameState={gameState}
+        currentPage={getCurrentPage()}
+        canChoose={canChoose}
+        getChoiceRequirements={getChoiceRequirements}
+        makeChoice={makeChoice}
+        jumpToPage={jumpToPage}
+        restart={restart}
+        getPageById={getPageById}
+        getSaveSlots={getSaveSlots}
+        saveGame={saveGame}
+        loadGame={loadGame}
+        deleteSave={deleteSave}
+        exitStory={exitStory}
+        maxSaveSlots={maxSaveSlots}
+        canSave={canSave}
+      />
+    </ThemeProvider>
   );
 };
 
