@@ -1,6 +1,7 @@
 import { useGamebook } from '@/hooks/useGamebook';
 import { WelcomeScreen } from '@/components/gamebook/WelcomeScreen';
 import { StoryReader } from '@/components/gamebook/StoryReader';
+import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
 
 const Index = () => {
   const {
@@ -8,9 +9,11 @@ const Index = () => {
     gameState,
     isPlaying,
     loadStory,
+    completeCharacterSetup,
     getCurrentPage,
     getPageById,
     canChoose,
+    getChoiceRequirements,
     makeChoice,
     jumpToPage,
     restart,
@@ -20,10 +23,21 @@ const Index = () => {
     deleteSave,
     exitStory,
     maxSaveSlots,
+    canSave,
   } = useGamebook();
 
   if (!isPlaying || !gamebookData) {
     return <WelcomeScreen onLoadStory={loadStory} />;
+  }
+
+  // Show character setup if needed
+  if (!gameState.isCharacterSetupComplete) {
+    return (
+      <CharacterSetup
+        gamebookData={gamebookData}
+        onComplete={completeCharacterSetup}
+      />
+    );
   }
 
   return (
@@ -32,6 +46,7 @@ const Index = () => {
       gameState={gameState}
       currentPage={getCurrentPage()}
       canChoose={canChoose}
+      getChoiceRequirements={getChoiceRequirements}
       makeChoice={makeChoice}
       jumpToPage={jumpToPage}
       restart={restart}
@@ -42,6 +57,7 @@ const Index = () => {
       deleteSave={deleteSave}
       exitStory={exitStory}
       maxSaveSlots={maxSaveSlots}
+      canSave={canSave}
     />
   );
 };
