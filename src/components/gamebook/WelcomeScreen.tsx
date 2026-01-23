@@ -1,19 +1,49 @@
 import { useCallback, useState } from 'react';
-import { Upload, FileJson, Download, AlertCircle } from 'lucide-react';
+import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GamebookData } from '@/types/gamebook';
+import { GamebookData, ValidationError } from '@/types/gamebook';
+import { validateGamebook } from '@/lib/gamebook-validator';
 
 interface WelcomeScreenProps {
   onLoadStory: (data: GamebookData) => void;
 }
 
 const sampleTemplate: GamebookData = {
-  title: "Sample Adventure",
+  meta: {
+    title: "Sample Adventure",
+    author: "Demo Author",
+    version: "1.0"
+  },
+  presets: {
+    stats: {
+      "Health": { min: 0, max: 20, default: 10 },
+      "Luck": { min: 0, max: 10, default: 5 }
+    },
+    variables: {
+      "has_key": false,
+      "solved_puzzle": false
+    },
+    items: {
+      "torch": { name: "Torch", visible: true, type: "consumable" },
+      "ancient_key": { name: "Ancient Key", visible: true, type: "key" }
+    }
+  },
+  player: {
+    statMode: "preset_or_custom",
+    customPool: 5,
+    startingItems: ["torch"]
+  },
+  sections: [
+    { id: 0, name: "Introduction" },
+    { id: 1, name: "The Cave" },
+    { id: 2, name: "Endings" }
+  ],
   pages: [
     {
       id: 1,
+      section: 0,
       text: "You stand at the entrance of a mysterious cave. The darkness within beckons you forward, while the safety of the sunlit forest lies behind.",
       choices: [
         { text: "Enter the cave", nextPageId: 2 },
@@ -22,27 +52,53 @@ const sampleTemplate: GamebookData = {
     },
     {
       id: 2,
-      text: "Inside the cave, you discover a glowing crystal. As you approach, it pulses with an ethereal light.",
-      addItems: ["Glowing Crystal"],
-      statChanges: [{ name: "Magic", value: 5 }],
+      section: 1,
+      text: "Inside the cave, you discover a puzzle inscribed on the wall. What is 7 + 8?",
       choices: [
-        { text: "Take the crystal", nextPageId: 4 },
-        { text: "Leave it alone", nextPageId: 5 }
+        {
+          text: "Solve the puzzle",
+          input: { type: "number", prompt: "Enter your answer", answer: 15 },
+          effects: { variables: { "solved_puzzle": true }, itemsAdd: ["ancient_key"] },
+          nextPageId: 4,
+          failurePageId: 5
+        },
+        { text: "Leave the cave", nextPageId: 1 }
       ]
     },
     {
       id: 3,
-      text: "You decide the cave is too dangerous. Perhaps another day. The end.",
+      section: 2,
+      text: "You decide the cave is too dangerous. Perhaps another day.",
+      ending: { type: "soft" },
       choices: []
     },
     {
       id: 4,
-      text: "The crystal fills you with power! You've completed the adventure. The end.",
-      choices: []
+      section: 1,
+      text: "The wall slides open, revealing a hidden chamber. You found an Ancient Key!",
+      choices: [
+        {
+          text: "Enter the final chamber",
+          nextPageId: 6,
+          conditions: { items: ["ancient_key"] }
+        },
+        { text: "Return to entrance", nextPageId: 1 }
+      ]
     },
     {
       id: 5,
-      text: "You leave the crystal behind and exit the cave. Some mysteries are best left unsolved. The end.",
+      section: 1,
+      text: "The puzzle rejects your answer. The wall remains sealed.",
+      choices: [
+        { text: "Try again", nextPageId: 2 },
+        { text: "Leave", nextPageId: 1 }
+      ]
+    },
+    {
+      id: 6,
+      section: 2,
+      text: "Using the Ancient Key, you unlock the final chamber. Inside lies the treasure of ages. You have completed the adventure!",
+      ending: { type: "hard" },
       choices: []
     }
   ]
@@ -50,9 +106,10 @@ const sampleTemplate: GamebookData = {
 
 export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
   const [error, setError] = useState<string | null>(null);
+  const [warnings, setWarnings] = useState<ValidationError[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  const validateGamebook = (data: unknown): data is GamebookData => {
+  const validateAndCheckGamebook = (data: unknown): data is GamebookData => {
     if (!data || typeof data !== 'object') return false;
     const obj = data as Record<string, unknown>;
     if (!Array.isArray(obj.pages)) return false;
@@ -65,15 +122,33 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
 
   const handleFile = useCallback((file: File) => {
     setError(null);
+    setWarnings([]);
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
         const data = JSON.parse(content);
-        if (!validateGamebook(data)) {
+        
+        if (!validateAndCheckGamebook(data)) {
           setError('Invalid gamebook format. Please ensure your JSON has a "pages" array with valid page objects.');
           return;
         }
+
+        // Run validation
+        const validation = validateGamebook(data);
+        
+        if (!validation.valid) {
+          const errors = validation.errors.filter(e => e.type === 'error');
+          setError(errors.map(e => `${e.message}${e.context ? ` (${e.context})` : ''}`).join('\n'));
+          return;
+        }
+
+        // Show warnings but proceed
+        const warningsList = validation.errors.filter(e => e.type === 'warning');
+        if (warningsList.length > 0) {
+          setWarnings(warningsList);
+        }
+
         onLoadStory(data);
       } catch {
         setError('Failed to parse JSON file. Please check the file format.');
@@ -116,6 +191,10 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     a.click();
     URL.revokeObjectURL(url);
   }, []);
+
+  const loadSampleStory = useCallback(() => {
+    onLoadStory(sampleTemplate);
+  }, [onLoadStory]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -165,39 +244,66 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
             {error && (
               <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
               </Alert>
             )}
+
+            {warnings.length > 0 && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <p className="font-medium mb-1">Warnings (story will still load):</p>
+                  <ul className="text-sm list-disc list-inside">
+                    {warnings.slice(0, 5).map((w, i) => (
+                      <li key={i}>{w.message}</li>
+                    ))}
+                    {warnings.length > 5 && <li>...and {warnings.length - 5} more</li>}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={downloadTemplate} className="flex-1">
+                <Download className="h-4 w-4 mr-2" />
+                Download Template
+              </Button>
+              <Button variant="default" onClick={loadSampleStory} className="flex-1">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Try Sample Story
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>JSON Format Guide</CardTitle>
-            <CardDescription>Your gamebook JSON should follow this structure</CardDescription>
+            <CardTitle>Extended JSON Format</CardTitle>
+            <CardDescription>New features supported in the schema</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto">
+            <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
 {`{
-  "title": "Your Story Title",
-  "pages": [
-    {
-      "id": 1,
-      "text": "Story text here...",
-      "choices": [
-        { "text": "Choice 1", "nextPageId": 2 },
-        { "text": "Choice 2", "nextPageId": 3 }
-      ],
-      "addItems": ["Sword"],
-      "statChanges": [{ "name": "HP", "value": 10 }]
-    }
-  ]
+  "meta": { "title": "...", "author": "...", "version": "1.0" },
+  "presets": {
+    "stats": { "Health": { "min": 0, "max": 20, "default": 10 } },
+    "variables": { "has_key": false },
+    "items": { "torch": { "name": "Torch", "visible": true } }
+  },
+  "player": { "statMode": "preset_or_custom", "customPool": 5 },
+  "pages": [{
+    "id": 1, "section": 0, "text": "Story text...",
+    "effects": { "variables": { "flag": true }, "itemsAdd": ["item_id"] },
+    "choices": [{
+      "text": "Choice text", "nextPageId": 2,
+      "conditions": { "stats": { "Health": { "gte": 5 } } },
+      "input": { "type": "number", "prompt": "Answer?", "answer": 42 },
+      "failurePageId": 3
+    }],
+    "ending": { "type": "hard" }
+  }]
 }`}
             </pre>
-            <Button variant="secondary" onClick={downloadTemplate} className="w-full">
-              <Download className="h-4 w-4 mr-2" />
-              Download Sample Template
-            </Button>
           </CardContent>
         </Card>
       </div>

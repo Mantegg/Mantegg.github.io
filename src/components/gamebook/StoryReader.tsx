@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, RotateCcw, LogOut } from 'lucide-react';
+import { Menu, RotateCcw, LogOut, Trophy, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { GamebookData, GameState, Page, Choice, SaveSlot } from '@/types/gamebook';
@@ -7,13 +7,15 @@ import { HistoryPanel } from './HistoryPanel';
 import { InventoryPanel } from './InventoryPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
 import { ChoiceButton } from './ChoiceButton';
+import { InputDialog } from './InputDialog';
 
 interface StoryReaderProps {
   gamebookData: GamebookData;
   gameState: GameState;
   currentPage: Page | null;
   canChoose: (choice: Choice) => boolean;
-  makeChoice: (choice: Choice) => void;
+  getChoiceRequirements: (choice: Choice) => string[];
+  makeChoice: (choice: Choice, inputCorrect?: boolean) => void;
   jumpToPage: (pageId: number) => void;
   restart: () => void;
   getPageById: (id: number) => Page | null;
@@ -23,6 +25,7 @@ interface StoryReaderProps {
   deleteSave: (slotId: number) => void;
   exitStory: () => void;
   maxSaveSlots: number;
+  canSave: () => boolean;
 }
 
 export function StoryReader({
@@ -30,6 +33,7 @@ export function StoryReader({
   gameState,
   currentPage,
   canChoose,
+  getChoiceRequirements,
   makeChoice,
   jumpToPage,
   restart,
@@ -40,8 +44,11 @@ export function StoryReader({
   deleteSave,
   exitStory,
   maxSaveSlots,
+  canSave,
 }: StoryReaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [inputDialogOpen, setInputDialogOpen] = useState(false);
+  const [pendingInputChoice, setPendingInputChoice] = useState<Choice | null>(null);
 
   if (!currentPage) {
     return (
@@ -51,16 +58,45 @@ export function StoryReader({
     );
   }
 
-  const isEnding = currentPage.choices.length === 0;
+  const isEnding = currentPage.choices.length === 0 || !!currentPage.ending;
+  const endingType = currentPage.ending?.type || (currentPage.choices.length === 0 ? 'soft' : undefined);
+  const isHardEnding = endingType === 'hard';
+
+  const handleChoiceClick = (choice: Choice) => {
+    if (choice.input) {
+      setPendingInputChoice(choice);
+      setInputDialogOpen(true);
+    } else {
+      makeChoice(choice);
+    }
+  };
+
+  const handleInputSubmit = (correct: boolean) => {
+    if (pendingInputChoice) {
+      makeChoice(pendingInputChoice, correct);
+      setPendingInputChoice(null);
+      setInputDialogOpen(false);
+    }
+  };
+
+  const title = gamebookData.meta?.title || gamebookData.title || 'Untitled Story';
+
+  // Get section name if available
+  const sectionName = gamebookData.sections?.find(s => s.id === currentPage.section)?.name;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-          <h1 className="font-serif font-semibold text-lg truncate">
-            {gamebookData.title || 'Untitled Story'}
-          </h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-serif font-semibold text-lg truncate">
+              {title}
+            </h1>
+            {sectionName && (
+              <p className="text-xs text-muted-foreground truncate">{sectionName}</p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={restart} title="Restart">
               <RotateCcw className="h-4 w-4" />
@@ -76,19 +112,22 @@ export function StoryReader({
               </SheetTrigger>
               <SheetContent className="w-80 overflow-y-auto">
                 <div className="space-y-6 pt-6">
-                  <SaveLoadPanel
-                    saveSlots={getSaveSlots()}
-                    onSave={saveGame}
-                    onLoad={(slot) => {
-                      loadGame(slot);
-                      setSidebarOpen(false);
-                    }}
-                    onDelete={deleteSave}
-                    maxSlots={maxSaveSlots}
-                  />
+                  {canSave() && (
+                    <SaveLoadPanel
+                      saveSlots={getSaveSlots()}
+                      onSave={saveGame}
+                      onLoad={(slot) => {
+                        loadGame(slot);
+                        setSidebarOpen(false);
+                      }}
+                      onDelete={deleteSave}
+                      maxSlots={maxSaveSlots}
+                    />
+                  )}
                   <InventoryPanel 
                     inventory={gameState.inventory} 
-                    stats={gameState.stats} 
+                    stats={gameState.stats}
+                    gamebookData={gamebookData}
                   />
                   <HistoryPanel
                     history={gameState.history}
@@ -110,6 +149,13 @@ export function StoryReader({
       <main className="container max-w-3xl mx-auto px-4 py-8">
         <article className="prose prose-lg dark:prose-invert max-w-none">
           <div className="bg-card rounded-lg p-6 md:p-8 shadow-sm border">
+            {/* Player name greeting (if set) */}
+            {gameState.playerName && gameState.history.length === 1 && (
+              <p className="text-muted-foreground text-sm mb-4">
+                Welcome, <span className="font-medium text-foreground">{gameState.playerName}</span>
+              </p>
+            )}
+
             {/* Page text */}
             <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap text-lg">
               {currentPage.text}
@@ -118,7 +164,23 @@ export function StoryReader({
             {/* Ending indicator */}
             {isEnding && (
               <div className="mt-8 pt-6 border-t text-center">
-                <p className="text-muted-foreground italic font-serif text-xl">— The End —</p>
+                {isHardEnding ? (
+                  <>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Trophy className="h-6 w-6 text-yellow-500" />
+                    </div>
+                    <p className="text-muted-foreground italic font-serif text-xl">— The End —</p>
+                    <p className="text-sm text-muted-foreground mt-2">Congratulations! You've reached a true ending.</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Skull className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground italic font-serif text-xl">— The End —</p>
+                    <p className="text-sm text-muted-foreground mt-2">This journey has ended. Try again?</p>
+                  </>
+                )}
                 <Button onClick={restart} className="mt-4">
                   <RotateCcw className="h-4 w-4 mr-2" />
                   Start Over
@@ -127,14 +189,16 @@ export function StoryReader({
             )}
 
             {/* Choices */}
-            {!isEnding && (
+            {!isEnding && currentPage.choices.length > 0 && (
               <div className="mt-8 pt-6 border-t space-y-3">
                 {currentPage.choices.map((choice, index) => (
                   <ChoiceButton
                     key={index}
                     choice={choice}
                     canChoose={canChoose(choice)}
-                    onClick={() => makeChoice(choice)}
+                    requirements={getChoiceRequirements(choice)}
+                    hasInput={!!choice.input}
+                    onClick={() => handleChoiceClick(choice)}
                   />
                 ))}
               </div>
@@ -150,6 +214,19 @@ export function StoryReader({
           )}
         </div>
       </main>
+
+      {/* Input Dialog for puzzles */}
+      {pendingInputChoice?.input && (
+        <InputDialog
+          open={inputDialogOpen}
+          onOpenChange={(open) => {
+            setInputDialogOpen(open);
+            if (!open) setPendingInputChoice(null);
+          }}
+          input={pendingInputChoice.input}
+          onSubmit={handleInputSubmit}
+        />
+      )}
     </div>
   );
 }
