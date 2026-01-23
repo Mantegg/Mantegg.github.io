@@ -1,7 +1,11 @@
-import { Package, BarChart3 } from 'lucide-react';
+import { Package, BarChart3, Skull } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { GamebookData } from '@/types/gamebook';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+import { useState } from 'react';
 
 interface InventoryPanelProps {
   inventory: string[];
@@ -10,26 +14,29 @@ interface InventoryPanelProps {
 }
 
 export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPanelProps) {
+  const [enemiesOpen, setEnemiesOpen] = useState(false);
+  
   const statPresets = gamebookData?.presets?.stats;
-  const itemPresets = gamebookData?.presets?.items;
+  
+  // Get items from both array and preset formats
+  const getItemInfo = (itemId: string): { name: string; visible: boolean; type?: string } => {
+    // Check array-based items first
+    if (gamebookData?.items) {
+      const item = gamebookData.items.find(i => i.id === itemId);
+      if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+    }
+    // Check preset items
+    const preset = gamebookData?.presets?.items?.[itemId];
+    if (preset) return { name: preset.name, visible: preset.visible !== false, type: preset.type };
+    // Default
+    return { name: itemId, visible: true };
+  };
 
-  // Filter visible items based on preset visibility
+  // Filter visible items
   const visibleItems = inventory.filter(itemId => {
-    const preset = itemPresets?.[itemId];
-    // If no preset defined, show item (backward compatibility)
-    // If preset exists, respect visibility flag
-    return !preset || preset.visible !== false;
+    const info = getItemInfo(itemId);
+    return info.visible;
   });
-
-  // Get item display name
-  const getItemName = (itemId: string): string => {
-    return itemPresets?.[itemId]?.name || itemId;
-  };
-
-  // Get item type for badge styling
-  const getItemType = (itemId: string): string | undefined => {
-    return itemPresets?.[itemId]?.type;
-  };
 
   const getItemBadgeVariant = (type?: string): "default" | "secondary" | "outline" => {
     switch (type) {
@@ -41,8 +48,12 @@ export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPane
 
   const hasStats = Object.keys(stats).length > 0;
   const hasItems = visibleItems.length > 0;
+  
+  // Get enemies from both formats
+  const enemies = gamebookData?.enemies || Object.entries(gamebookData?.presets?.enemies || {}).map(([id, e]) => ({ id, ...e }));
+  const hasEnemies = enemies.length > 0;
 
-  if (!hasStats && !hasItems) {
+  if (!hasStats && !hasItems && !hasEnemies) {
     return (
       <div className="space-y-3">
         <h3 className="font-semibold text-sm flex items-center gap-2">
@@ -102,17 +113,58 @@ export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPane
             Inventory
           </h3>
           <div className="flex flex-wrap gap-2">
-            {visibleItems.map((itemId) => (
-              <Badge
-                key={itemId}
-                variant={getItemBadgeVariant(getItemType(itemId))}
-                className="text-xs"
-              >
-                {getItemName(itemId)}
-              </Badge>
-            ))}
+            {visibleItems.map((itemId) => {
+              const info = getItemInfo(itemId);
+              return (
+                <Badge
+                  key={itemId}
+                  variant={getItemBadgeVariant(info.type)}
+                  className="text-xs"
+                >
+                  {info.name}
+                </Badge>
+              );
+            })}
           </div>
         </div>
+      )}
+
+      {(hasStats || hasItems) && hasEnemies && <Separator />}
+
+      {/* Enemies Reference Section */}
+      {hasEnemies && (
+        <Collapsible open={enemiesOpen} onOpenChange={setEnemiesOpen}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-full justify-between">
+              <span className="flex items-center gap-2">
+                <Skull className="h-4 w-4" />
+                Enemies Reference
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${enemiesOpen ? 'rotate-180' : ''}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <div className="space-y-2">
+              {enemies.map((enemy) => (
+                <div key={enemy.id} className="p-2 bg-muted/50 rounded text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{enemy.name}</span>
+                    {'rank' in enemy && enemy.rank !== undefined && (
+                      <Badge variant="outline" className="text-xs">Rank {enemy.rank}</Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex gap-3">
+                    {'hayat' in enemy && enemy.hayat !== undefined && <span>HP: {enemy.hayat}</span>}
+                    {'attack' in enemy && enemy.attack !== undefined && <span>ATK: {enemy.attack}</span>}
+                  </div>
+                  {'note' in enemy && enemy.note && (
+                    <p className="text-xs text-muted-foreground italic mt-1">{enemy.note}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
