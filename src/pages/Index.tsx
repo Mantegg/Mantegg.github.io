@@ -1,7 +1,6 @@
 import { useGamebook } from '@/hooks/useGamebook';
 import { WelcomeScreen } from '@/components/gamebook/WelcomeScreen';
 import { StoryReader } from '@/components/gamebook/StoryReader';
-import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const Index = () => {
@@ -10,7 +9,6 @@ const Index = () => {
     gameState,
     isPlaying,
     loadStory,
-    completeCharacterSetup,
     getCurrentPage,
     getPageById,
     canChoose,
@@ -25,6 +23,7 @@ const Index = () => {
     exitStory,
     maxSaveSlots,
     canSave,
+    updateStat,
   } = useGamebook();
 
   if (!isPlaying || !gamebookData) {
@@ -35,17 +34,8 @@ const Index = () => {
     );
   }
 
-  // Show character setup if needed
-  if (!gameState.isCharacterSetupComplete) {
-    return (
-      <ThemeProvider>
-        <CharacterSetup
-          gamebookData={gamebookData}
-          onComplete={completeCharacterSetup}
-        />
-      </ThemeProvider>
-    );
-  }
+  // Character setup is no longer needed - stats are author-defined
+  // and always editable by the player
 
   return (
     <ThemeProvider>
@@ -66,6 +56,7 @@ const Index = () => {
         exitStory={exitStory}
         maxSaveSlots={maxSaveSlots}
         canSave={canSave}
+        onUpdateStat={updateStat}
       />
     </ThemeProvider>
   );

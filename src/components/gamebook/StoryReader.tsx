@@ -11,6 +11,7 @@ import { InputDialog } from './InputDialog';
 import { DicePopup } from './DicePopup';
 import { ThemeControls } from './ThemeControls';
 import { useTheme, useApplyThemeConfig } from '@/contexts/ThemeContext';
+import { formatText } from '@/lib/text-formatter';
 
 interface StoryReaderProps {
   gamebookData: GamebookData;
@@ -29,6 +30,7 @@ interface StoryReaderProps {
   exitStory: () => void;
   maxSaveSlots: number;
   canSave: () => boolean;
+  onUpdateStat?: (statName: string, value: number) => void;
 }
 
 export function StoryReader({
@@ -48,6 +50,7 @@ export function StoryReader({
   exitStory,
   maxSaveSlots,
   canSave,
+  onUpdateStat,
 }: StoryReaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inputDialogOpen, setInputDialogOpen] = useState(false);
@@ -157,6 +160,7 @@ export function StoryReader({
                     inventory={gameState.inventory} 
                     stats={gameState.stats}
                     gamebookData={gamebookData}
+                    onUpdateStat={onUpdateStat}
                   />
                   <HistoryPanel
                     history={gameState.history as (number | string)[]}
@@ -197,9 +201,9 @@ export function StoryReader({
               </div>
             )}
 
-            {/* Page text */}
-            <div className="font-serif text-foreground leading-relaxed whitespace-pre-wrap text-lg">
-              {currentPage.text}
+            {/* Page text with formatting support */}
+            <div className="font-serif text-foreground leading-relaxed text-lg">
+              {formatText(currentPage.text)}
             </div>
 
             {/* Choice notes (e.g., combat instructions) */}

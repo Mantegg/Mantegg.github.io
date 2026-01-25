@@ -19,11 +19,16 @@ function rollDice(type: DiceType): number {
   return Math.floor(Math.random() * max) + 1;
 }
 
+/**
+ * Standalone dice roller popup.
+ * This is a UI tool only - it does NOT affect game state.
+ * Players use this to roll dice manually and then choose their outcome.
+ */
 export function DicePopup({ stats = {} }: DicePopupProps) {
   const [open, setOpen] = useState(false);
   const [diceType, setDiceType] = useState<DiceType>('d6');
   const [quantity, setQuantity] = useState(1);
-  const [selectedStat, setSelectedStat] = useState<string>('');
+  const [selectedStat, setSelectedStat] = useState<string>('none');
   const [result, setResult] = useState<DiceRollResult | null>(null);
 
   const statNames = Object.keys(stats);
@@ -42,7 +47,8 @@ export function DicePopup({ stats = {} }: DicePopupProps) {
       total,
     };
 
-    if (selectedStat && stats[selectedStat] !== undefined) {
+    // Only add stat test if a real stat is selected (not "none")
+    if (selectedStat !== 'none' && stats[selectedStat] !== undefined) {
       newResult.statName = selectedStat;
       newResult.statValue = stats[selectedStat];
       newResult.success = total <= stats[selectedStat];
@@ -53,6 +59,10 @@ export function DicePopup({ stats = {} }: DicePopupProps) {
 
   const handleReset = () => {
     setResult(null);
+  };
+
+  const handleStatChange = (value: string) => {
+    setSelectedStat(value);
   };
 
   return (
@@ -105,12 +115,12 @@ export function DicePopup({ stats = {} }: DicePopupProps) {
           {statNames.length > 0 && (
             <div className="space-y-2">
               <Label>Test Against Stat (Optional)</Label>
-              <Select value={selectedStat} onValueChange={setSelectedStat}>
+              <Select value={selectedStat} onValueChange={handleStatChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="None - Just roll" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">None - Just roll</SelectItem>
+                  <SelectItem value="none">None - Just roll</SelectItem>
                   {statNames.map((name) => (
                     <SelectItem key={name} value={name}>
                       {name} ({stats[name]})
