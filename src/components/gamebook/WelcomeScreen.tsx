@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GamebookData, ValidationError } from '@/types/gamebook';
-import { validateGamebook } from '@/lib/gamebook-validator';
+import { validateGamebookStructure, validateGamebook } from '@/lib/gamebook-validator';
 
 interface WelcomeScreenProps {
   onLoadStory: (data: GamebookData) => void;
@@ -16,25 +16,21 @@ const sampleTemplate: GamebookData = {
     author: "Demo Author",
     version: "1.0"
   },
-  presets: {
+  player: {
     stats: {
-      "Health": { min: 0, max: 20, default: 10 },
-      "Luck": { min: 0, max: 10, default: 5 }
+      "Health": 10,
+      "Luck": 5
     },
     variables: {
       "has_key": false,
       "solved_puzzle": false
     },
-    items: {
-      "torch": { name: "Torch", visible: true, type: "consumable" },
-      "ancient_key": { name: "Ancient Key", visible: true, type: "key" }
-    }
-  },
-  player: {
-    statMode: "preset_or_custom",
-    customPool: 5,
     startingItems: ["torch"]
   },
+  items: [
+    { id: "torch", name: "Torch", visible: true, type: "consumable" },
+    { id: "ancient_key", name: "Ancient Key", visible: true, type: "key" }
+  ],
   sections: [
     { id: 0, name: "Introduction" },
     { id: 1, name: "The Cave" },
@@ -109,17 +105,6 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
   const [warnings, setWarnings] = useState<ValidationError[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  const validateAndCheckGamebook = (data: unknown): data is GamebookData => {
-    if (!data || typeof data !== 'object') return false;
-    const obj = data as Record<string, unknown>;
-    if (!Array.isArray(obj.pages)) return false;
-    return obj.pages.every((page: unknown) => {
-      if (!page || typeof page !== 'object') return false;
-      const p = page as Record<string, unknown>;
-      return typeof p.id === 'number' && typeof p.text === 'string' && Array.isArray(p.choices);
-    });
-  };
-
   const handleFile = useCallback((file: File) => {
     setError(null);
     setWarnings([]);
@@ -127,15 +112,27 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     reader.onload = (e) => {
       try {
         const content = e.target?.result as string;
-        const data = JSON.parse(content);
         
-        if (!validateAndCheckGamebook(data)) {
-          setError('Invalid gamebook format. Please ensure your JSON has a "pages" array with valid page objects.');
+        // Parse JSON
+        let data: unknown;
+        try {
+          data = JSON.parse(content);
+        } catch {
+          setError('Failed to parse JSON file. Please check for syntax errors.');
+          return;
+        }
+        
+        // Early structure validation - fail fast with clear messages
+        const structureCheck = validateGamebookStructure(data);
+        if (!structureCheck.valid) {
+          setError(structureCheck.error || 'Invalid gamebook file.');
           return;
         }
 
-        // Run validation
-        const validation = validateGamebook(data);
+        const gamebookData = data as GamebookData;
+
+        // Run detailed validation
+        const validation = validateGamebook(gamebookData);
         
         if (!validation.valid) {
           const errors = validation.errors.filter(e => e.type === 'error');
@@ -149,9 +146,9 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
           setWarnings(warningsList);
         }
 
-        onLoadStory(data);
+        onLoadStory(gamebookData);
       } catch {
-        setError('Failed to parse JSON file. Please check the file format.');
+        setError('An unexpected error occurred while processing the file.');
       }
     };
     reader.readAsText(file);
@@ -166,7 +163,7 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && file.type === 'application/json') {
+    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
       handleFile(file);
     } else {
       setError('Please drop a valid JSON file.');
@@ -278,32 +275,34 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Extended JSON Format</CardTitle>
-            <CardDescription>New features supported in the schema</CardDescription>
+            <CardTitle>JSON Format (Spec v1)</CardTitle>
+            <CardDescription>Author-defined stats and simple structure</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
 {`{
   "meta": { "title": "...", "author": "...", "version": "1.0" },
-  "presets": {
-    "stats": { "Health": { "min": 0, "max": 20, "default": 10 } },
-    "variables": { "has_key": false },
-    "items": { "torch": { "name": "Torch", "visible": true } }
+  "player": {
+    "stats": { "Health": 10, "Focus": 5 },
+    "variables": { "flag_a": false },
+    "inventory": []
   },
-  "player": { "statMode": "preset_or_custom", "customPool": 5 },
+  "items": [
+    { "id": "key", "name": "Ancient Key", "visible": true }
+  ],
   "pages": [{
-    "id": 1, "section": 0, "text": "Story text...",
-    "effects": { "variables": { "flag": true }, "itemsAdd": ["item_id"] },
+    "id": 1, "text": "**Bold** and _italic_ text...",
     "choices": [{
       "text": "Choice text", "nextPageId": 2,
-      "conditions": { "stats": { "Health": { "gte": 5 } } },
-      "input": { "type": "number", "prompt": "Answer?", "answer": 42 },
-      "failurePageId": 3
-    }],
-    "ending": { "type": "hard" }
+      "effects": { "stats": { "Health": -1 }, "itemsAdd": ["key"] }
+    }]
   }]
 }`}
             </pre>
+            <p className="text-xs text-muted-foreground">
+              Stats are author-defined numeric values. Effects apply raw deltas. 
+              Text supports **bold**, _italic_, and line breaks.
+            </p>
           </CardContent>
         </Card>
       </div>

@@ -1,9 +1,10 @@
-import { Package, BarChart3, Skull } from 'lucide-react';
+import { Package, BarChart3, Skull, Edit2, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { GamebookData } from '@/types/gamebook';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,19 +12,26 @@ interface InventoryPanelProps {
   inventory: string[];
   stats: Record<string, number>;
   gamebookData?: GamebookData | null;
+  onUpdateStat?: (statName: string, value: number) => void;
 }
 
-export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPanelProps) {
+export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat }: InventoryPanelProps) {
   const [enemiesOpen, setEnemiesOpen] = useState(false);
-  
-  const statPresets = gamebookData?.presets?.stats;
+  const [editingStat, setEditingStat] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
   
   // Get items from both array and preset formats
   const getItemInfo = (itemId: string): { name: string; visible: boolean; type?: string } => {
     // Check array-based items first
     if (gamebookData?.items) {
-      const item = gamebookData.items.find(i => i.id === itemId);
-      if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+      if (Array.isArray(gamebookData.items)) {
+        const item = gamebookData.items.find(i => i.id === itemId);
+        if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+      } else {
+        // Object format: items: { "item_id": { name: "...", ... } }
+        const item = (gamebookData.items as Record<string, { name: string; visible?: boolean; type?: string }>)[itemId];
+        if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+      }
     }
     // Check preset items
     const preset = gamebookData?.presets?.items?.[itemId];
@@ -53,6 +61,25 @@ export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPane
   const enemies = gamebookData?.enemies || Object.entries(gamebookData?.presets?.enemies || {}).map(([id, e]) => ({ id, ...e }));
   const hasEnemies = enemies.length > 0;
 
+  const handleStartEdit = (statName: string, currentValue: number) => {
+    setEditingStat(statName);
+    setEditValue(String(currentValue));
+  };
+
+  const handleSaveEdit = (statName: string) => {
+    const newValue = parseInt(editValue, 10);
+    if (!isNaN(newValue) && onUpdateStat) {
+      onUpdateStat(statName, newValue);
+    }
+    setEditingStat(null);
+    setEditValue('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingStat(null);
+    setEditValue('');
+  };
+
   if (!hasStats && !hasItems && !hasEnemies) {
     return (
       <div className="space-y-3">
@@ -73,32 +100,63 @@ export function InventoryPanel({ inventory, stats, gamebookData }: InventoryPane
           <h3 className="font-semibold text-sm flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Stats
+            {onUpdateStat && (
+              <span className="text-xs text-muted-foreground font-normal">(editable)</span>
+            )}
           </h3>
           <div className="space-y-2">
-            {Object.entries(stats).map(([name, value]) => {
-              const preset = statPresets?.[name];
-              const max = preset?.max;
-              const percentage = max ? (value / max) * 100 : null;
-
-              return (
-                <div key={name} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">{name}</span>
-                    <span className="text-muted-foreground">
-                      {value}{max ? ` / ${max}` : ''}
-                    </span>
-                  </div>
-                  {percentage !== null && (
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary transition-all duration-300"
-                        style={{ width: `${Math.min(100, Math.max(0, percentage))}%` }}
+            {Object.entries(stats).map(([name, value]) => (
+              <div key={name} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium">{name}</span>
+                  {editingStat === name ? (
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="h-6 w-16 text-right text-sm px-1"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit(name);
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        autoFocus
                       />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => handleSaveEdit(name)}
+                      >
+                        <Check className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={handleCancelEdit}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <span className="text-muted-foreground">{value}</span>
+                      {onUpdateStat && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-50 hover:opacity-100"
+                          onClick={() => handleStartEdit(name, value)}
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         </div>
       )}

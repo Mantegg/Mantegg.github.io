@@ -64,12 +64,6 @@ export function useGamebook() {
     const pages = normalizePages(data);
     setNormalizedPages(pages);
     
-    // Check if character setup is needed (old preset format with min/max/default)
-    const hasPresetStats = data.presets?.stats && Object.keys(data.presets.stats).length > 0;
-    // New format: player.stats defines initial values directly
-    const hasPlayerStats = data.player?.stats && Object.keys(data.player.stats).length > 0;
-    const needsSetup = hasPresetStats && !hasPlayerStats;
-    
     const firstPageId = pages[0]?.id ?? 0;
 
     // Initialize variables from presets OR player config
@@ -85,16 +79,20 @@ export function useGamebook() {
       }
     }
 
-    // Initialize stats from presets (with defaults) OR player config (direct values)
+    // Initialize stats from player config (simple Record<string, number>)
+    // Stats are author-defined, no presets with min/max/default
     const initialStats: Record<string, number> = {};
-    if (data.presets?.stats) {
-      for (const [key, preset] of Object.entries(data.presets.stats)) {
-        initialStats[key] = preset.default;
-      }
-    }
     if (data.player?.stats) {
       for (const [key, value] of Object.entries(data.player.stats)) {
         initialStats[key] = value;
+      }
+    }
+    // Legacy: support presets.stats with default values for backward compat
+    if (data.presets?.stats) {
+      for (const [key, preset] of Object.entries(data.presets.stats)) {
+        if (initialStats[key] === undefined) {
+          initialStats[key] = preset.default;
+        }
       }
     }
 
@@ -122,7 +120,7 @@ export function useGamebook() {
       variables: initialVariables,
       playerName: '',
       visitedPages: new Set([firstPageId]),
-      isCharacterSetupComplete: !needsSetup,
+      isCharacterSetupComplete: true, // Always complete - no preset selection needed
       bookmarks,
     };
 
@@ -136,6 +134,25 @@ export function useGamebook() {
       playerName,
       stats,
       isCharacterSetupComplete: true,
+    }));
+  }, []);
+
+  // Update stats directly (for editable stats UI)
+  const updateStats = useCallback((newStats: Record<string, number>) => {
+    setGameState(prev => ({
+      ...prev,
+      stats: newStats,
+    }));
+  }, []);
+
+  // Update a single stat
+  const updateStat = useCallback((statName: string, value: number) => {
+    setGameState(prev => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        [statName]: value,
+      },
     }));
   }, []);
 
@@ -174,7 +191,7 @@ export function useGamebook() {
     // Check stats
     if (requires.stats) {
       for (const [statName, condition] of Object.entries(requires.stats)) {
-        const currentValue = gameState.stats[statName] || 0;
+        const currentValue = gameState.stats[statName] ?? 0;
         if (condition.gte !== undefined && currentValue < condition.gte) return false;
         if (condition.lte !== undefined && currentValue > condition.lte) return false;
       }
@@ -188,7 +205,7 @@ export function useGamebook() {
     // Check stat conditions
     if (conditions.stats) {
       for (const [statName, condition] of Object.entries(conditions.stats)) {
-        const currentValue = gameState.stats[statName] || 0;
+        const currentValue = gameState.stats[statName] ?? 0;
         if (condition.gte !== undefined && currentValue < condition.gte) return false;
         if (condition.lte !== undefined && currentValue > condition.lte) return false;
       }
@@ -218,7 +235,7 @@ export function useGamebook() {
       return false;
     }
     if (choice.requiresStat) {
-      const currentValue = gameState.stats[choice.requiresStat.name] || 0;
+      const currentValue = gameState.stats[choice.requiresStat.name] ?? 0;
       if (currentValue < choice.requiresStat.min) {
         return false;
       }
@@ -241,8 +258,14 @@ export function useGamebook() {
   const getItemName = useCallback((itemId: string): string => {
     // Check array-based items first
     if (gamebookData?.items) {
-      const item = gamebookData.items.find(i => i.id === itemId);
-      if (item) return item.name;
+      if (Array.isArray(gamebookData.items)) {
+        const item = gamebookData.items.find(i => i.id === itemId);
+        if (item) return item.name;
+      } else {
+        // Object format
+        const item = (gamebookData.items as Record<string, { name: string }>)[itemId];
+        if (item) return item.name;
+      }
     }
     // Check preset items
     if (gamebookData?.presets?.items?.[itemId]) {
@@ -260,7 +283,7 @@ export function useGamebook() {
       hints.push(`Requires: ${getItemName(choice.requiresItem)}`);
     }
     if (choice.requiresStat) {
-      const currentValue = gameState.stats[choice.requiresStat.name] || 0;
+      const currentValue = gameState.stats[choice.requiresStat.name] ?? 0;
       if (currentValue < choice.requiresStat.min) {
         hints.push(`Requires: ${choice.requiresStat.name} ≥ ${choice.requiresStat.min}`);
       }
@@ -270,7 +293,7 @@ export function useGamebook() {
     if (choice.conditions) {
       if (choice.conditions.stats) {
         for (const [statName, condition] of Object.entries(choice.conditions.stats)) {
-          const currentValue = gameState.stats[statName] || 0;
+          const currentValue = gameState.stats[statName] ?? 0;
           if (condition.gte !== undefined && currentValue < condition.gte) {
             hints.push(`Requires: ${statName} ≥ ${condition.gte}`);
           }
@@ -307,7 +330,7 @@ export function useGamebook() {
       }
       if (choice.requires.stats) {
         for (const [statName, condition] of Object.entries(choice.requires.stats)) {
-          const currentValue = gameState.stats[statName] || 0;
+          const currentValue = gameState.stats[statName] ?? 0;
           if (condition.gte !== undefined && currentValue < condition.gte) {
             hints.push(`Requires: ${statName} ≥ ${condition.gte}`);
           }
@@ -329,20 +352,18 @@ export function useGamebook() {
     return hints;
   }, [gameState, getItemName]);
 
-  // Apply effects to game state
+  // Apply effects to game state - NO CLAMPING, raw numeric deltas
   const applyEffects = useCallback((effects: PageEffects, prevState: GameState): Partial<GameState> => {
     const updates: Partial<GameState> = {};
     
-    // Apply stat changes
+    // Apply stat changes - raw deltas, no clamping
     if (effects.stats) {
       const newStats = { ...prevState.stats };
       for (const [statName, delta] of Object.entries(effects.stats)) {
-        newStats[statName] = (newStats[statName] || 0) + delta;
-        // Clamp to preset bounds if available
-        const preset = gamebookData?.presets?.stats?.[statName];
-        if (preset) {
-          newStats[statName] = Math.max(preset.min, Math.min(preset.max, newStats[statName]));
-        }
+        // If stat doesn't exist, initialize to 0 then apply delta
+        const currentValue = newStats[statName] ?? 0;
+        newStats[statName] = currentValue + delta;
+        // NO clamping - engine does not enforce limits
       }
       updates.stats = newStats;
     }
@@ -374,7 +395,7 @@ export function useGamebook() {
     }
 
     return updates;
-  }, [gamebookData]);
+  }, []);
 
   const makeChoice = useCallback((choice: Choice, inputCorrect?: boolean) => {
     // Determine target page (handle different formats and bookmark navigation)
@@ -433,7 +454,7 @@ export function useGamebook() {
         }
         if (targetPage.statChanges) {
           targetPage.statChanges.forEach(change => {
-            newStats[change.name] = (newStats[change.name] || 0) + change.value;
+            newStats[change.name] = (newStats[change.name] ?? 0) + change.value;
           });
         }
       }
@@ -482,14 +503,16 @@ export function useGamebook() {
     }
 
     const initialStats: Record<string, number> = {};
-    if (gamebookData.presets?.stats) {
-      for (const [key, preset] of Object.entries(gamebookData.presets.stats)) {
-        initialStats[key] = preset.default;
-      }
-    }
     if (gamebookData.player?.stats) {
       for (const [key, value] of Object.entries(gamebookData.player.stats)) {
         initialStats[key] = value;
+      }
+    }
+    if (gamebookData.presets?.stats) {
+      for (const [key, preset] of Object.entries(gamebookData.presets.stats)) {
+        if (initialStats[key] === undefined) {
+          initialStats[key] = preset.default;
+        }
       }
     }
 
@@ -499,10 +522,6 @@ export function useGamebook() {
     } else if (gamebookData.player?.inventory) {
       initialInventory = [...gamebookData.player.inventory];
     }
-
-    const hasPresetStats = gamebookData.presets?.stats && Object.keys(gamebookData.presets.stats).length > 0;
-    const hasPlayerStats = gamebookData.player?.stats && Object.keys(gamebookData.player.stats).length > 0;
-    const needsSetup = hasPresetStats && !hasPlayerStats;
 
     // Rebuild bookmark registry
     const bookmarks: Record<string, number | string> = {};
@@ -520,7 +539,7 @@ export function useGamebook() {
       variables: initialVariables,
       playerName: '',
       visitedPages: new Set([firstPageId]),
-      isCharacterSetupComplete: !needsSetup,
+      isCharacterSetupComplete: true,
       bookmarks,
     });
   }, [gamebookData, normalizedPages]);
@@ -628,6 +647,8 @@ export function useGamebook() {
     isPlaying,
     loadStory,
     completeCharacterSetup,
+    updateStats,
+    updateStat,
     getCurrentPage,
     getPageById,
     getPageByBookmark,
