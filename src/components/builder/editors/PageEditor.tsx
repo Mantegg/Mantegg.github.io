@@ -3,7 +3,6 @@ import { ValidationError } from '@/types/builder';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, Copy, Save, Sword, ShoppingCart, Zap, Lock } from 'lucide-react';
@@ -12,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
+import { RichTextEditor } from './RichTextEditor';
 
 // Helper component for editing choice effects
 const ChoiceEffectsEditor = ({ choice, items, onUpdate }: { choice: Choice; items: ItemDef[]; onUpdate: (effects: PageEffects | undefined) => void }) => {
@@ -380,16 +380,15 @@ export const PageEditor = ({
             <Label htmlFor="page-text">
               Text Content <span className="text-destructive">*</span>
             </Label>
-            <Textarea
-              id="page-text"
-              value={page.text || ''}
-              onChange={(e) => onUpdate(pageId, { text: e.target.value })}
+            <RichTextEditor
+              content={page.text || ''}
+              onChange={(content) => onUpdate(pageId, { text: content })}
               placeholder="Enter the story text for this page..."
-              rows={8}
-              className="font-serif"
+              minHeight="250px"
+              maxHeight="500px"
             />
             <p className="text-xs text-muted-foreground">
-              Use \\n\\n for paragraphs. Rich text editor coming soon!
+              Supports rich text formatting: <strong>bold</strong>, <em>italic</em>, headings, lists, and more!
             </p>
           </div>
         </CardContent>
