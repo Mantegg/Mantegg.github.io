@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle, Hammer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GamebookData, ValidationError } from '@/types/gamebook';
 import { validateGamebookStructure, validateGamebook } from '@/lib/gamebook-validator';
+import { useNavigate } from 'react-router-dom';
 
 interface WelcomeScreenProps {
   onLoadStory: (data: GamebookData) => void;
@@ -194,8 +195,17 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     onLoadStory(sampleTemplate);
   }, [onLoadStory]);
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <Button onClick={() => navigate('/builder')} size="lg" className="gap-2">
+          <Hammer className="h-5 w-5" />
+          Story Builder
+        </Button>
+      </div>
+      
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif font-bold text-foreground">Interactive Gamebook</h1>
