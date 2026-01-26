@@ -124,7 +124,20 @@ export const useStoryBuilder = () => {
 
   const addPage = useCallback((pageId?: number | string) => {
     const pages = state.gamebookData.pages || [];
-    const newPageId = pageId || Date.now();
+    
+    // Generate simple incremental ID if not provided
+    let newPageId: number | string;
+    if (pageId !== undefined) {
+      newPageId = pageId;
+    } else {
+      // Find the highest numeric ID and increment by 1
+      const numericIds = pages
+        .map(p => typeof p.id === 'number' ? p.id : parseInt(String(p.id), 10))
+        .filter(id => !isNaN(id));
+      const maxId = numericIds.length > 0 ? Math.max(...numericIds) : 0;
+      newPageId = maxId + 1;
+    }
+    
     const newPage: Page = {
       id: newPageId,
       text: '',

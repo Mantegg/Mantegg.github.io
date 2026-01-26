@@ -135,6 +135,7 @@ export const StoryBuilder = () => {
                 gamebookData={builder.state.gamebookData}
                 selectedPageId={builder.state.selectedPageId}
                 onSelectPage={builder.setSelectedPageId}
+                onAddPage={builder.addPage}
                 errors={builder.state.errors}
               />
               

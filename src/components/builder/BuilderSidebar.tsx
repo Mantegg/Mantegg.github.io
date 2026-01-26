@@ -12,7 +12,8 @@ import {
   Package, 
   Swords,
   Search,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ interface BuilderSidebarProps {
   gamebookData: GamebookData;
   selectedPageId: number | string | null;
   onSelectPage: (pageId: number | string) => void;
+  onAddPage?: () => void;
   errors: ValidationError[];
 }
 
@@ -42,6 +44,7 @@ export const BuilderSidebar = ({
   gamebookData,
   selectedPageId,
   onSelectPage,
+  onAddPage,
   errors,
 }: BuilderSidebarProps) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,15 +96,28 @@ export const BuilderSidebar = ({
 
       {selectedSection === 'pages' && (
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="p-3 border-b">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search pages..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8"
-              />
+          <div className="p-3 border-b space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search pages..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-8 h-8"
+                />
+              </div>
+              {onAddPage && (
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-8 w-8 p-0"
+                  onClick={() => onAddPage()}
+                  title="Add new page"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </div>
 
