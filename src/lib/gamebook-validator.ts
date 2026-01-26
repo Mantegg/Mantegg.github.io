@@ -77,8 +77,11 @@ export function validateGamebook(data: GamebookData): ValidationResult {
   const pages = getPages(data);
   
   // Collect all declared identifiers (optional - only if defined)
-  // Stats are now simple Record<string, number> - no presets
-  const declaredVariables = new Set(Object.keys(data.presets?.variables || data.player?.variables || {}));
+  const declaredVariables = new Set(Object.keys(data.presets?.variables || {}));
+  if (data.player?.startingVariables) {
+    Object.keys(data.player.startingVariables).forEach(v => declaredVariables.add(v));
+  }
+  
   const declaredItems = new Set<string>();
   
   // Collect items from array format
@@ -89,10 +92,6 @@ export function validateGamebook(data: GamebookData): ValidationResult {
       // Object format: items: { "item_id": { name: "...", ... } }
       Object.keys(data.items).forEach(id => declaredItems.add(id));
     }
-  }
-  // Collect items from preset format
-  if (data.presets?.items) {
-    Object.keys(data.presets.items).forEach(id => declaredItems.add(id));
   }
   
   const pageIds = new Set<string | number>();
@@ -192,12 +191,12 @@ export function validateGamebook(data: GamebookData): ValidationResult {
   }
 
   // Validate starting items
-  const startingItems = data.player?.startingItems || data.player?.inventory || [];
+  const startingItems = data.player?.startingItems || [];
   for (const itemId of startingItems) {
     if (declaredItems.size > 0 && !declaredItems.has(itemId)) {
       errors.push({
         type: 'warning',
-        message: `Starting item "${itemId}" not declared in presets`,
+        message: `Starting item "${itemId}" not declared in items array`,
         context: 'Player configuration'
       });
     }

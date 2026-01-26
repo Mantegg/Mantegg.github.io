@@ -74,25 +74,21 @@ export function useGamebook() {
         initialVariables[key] = value;
       }
     }
-    if (data.player?.variables) {
-      for (const [key, value] of Object.entries(data.player.variables)) {
-        initialVariables[key] = value;
+    // New structure: startingVariables in PlayerConfig
+    if (data.player?.startingVariables) {
+      for (const [key, value] of Object.entries(data.player.startingVariables)) {
+        initialVariables[key] = value as boolean | number | string;
       }
     }
 
-    // Initialize stats from player config (simple Record<string, number>)
-    // Stats are author-defined, no presets with min/max/default
+    // Initialize stats from presets (for character creation)
+    // If story has character creation, we'll use default values temporarily
     const initialStats: Record<string, number> = {};
-    if (data.player?.stats) {
-      for (const [key, value] of Object.entries(data.player.stats)) {
-        initialStats[key] = value;
-      }
-    }
-    // Legacy: support presets.stats with default values for backward compat
-    if (data.presets?.stats) {
-      for (const [key, preset] of Object.entries(data.presets.stats)) {
-        if (initialStats[key] === undefined) {
-          initialStats[key] = preset.default;
+    if (data.presets?.stats && data.player?.useStats) {
+      for (const statId of data.player.useStats) {
+        const preset = data.presets.stats[statId];
+        if (preset) {
+          initialStats[statId] = preset.default;
         }
       }
     }
@@ -101,8 +97,6 @@ export function useGamebook() {
     let initialInventory: string[] = [];
     if (data.player?.startingItems) {
       initialInventory = [...data.player.startingItems];
-    } else if (data.player?.inventory) {
-      initialInventory = [...data.player.inventory];
     }
 
     // Build bookmark registry from pages
@@ -127,6 +121,13 @@ export function useGamebook() {
       }
     }
 
+    // Determine if character creation is needed
+    const needsCharacterCreation = Boolean(
+      data.presets?.stats && 
+      data.player?.useStats && 
+      data.player.useStats.length > 0
+    );
+
     const initialState: GameState = {
       currentPageId: firstPageId,
       inventory: initialInventory,
@@ -135,7 +136,7 @@ export function useGamebook() {
       variables: initialVariables,
       playerName: '',
       visitedPages: new Set([firstPageId]),
-      isCharacterSetupComplete: true, // Always complete - no preset selection needed
+      isCharacterSetupComplete: !needsCharacterCreation, // Only skip if no character creation needed
       bookmarks,
       shopInventories,
     };
@@ -144,13 +145,25 @@ export function useGamebook() {
     setIsPlaying(true);
   }, []);
 
-  const completeCharacterSetup = useCallback((playerName: string, stats: Record<string, number>) => {
-    setGameState(prev => ({
-      ...prev,
-      playerName,
-      stats,
-      isCharacterSetupComplete: true,
-    }));
+  const completeCharacterSetup = useCallback((
+    playerName: string, 
+    stats: Record<string, number>,
+    inventory: string[] = [],
+    variables: Record<string, any> = {}
+  ) => {
+    setGameState(prev => {
+      // Merge character creation variables with existing ones
+      const mergedVariables = { ...prev.variables, ...variables };
+      
+      return {
+        ...prev,
+        playerName,
+        stats,
+        inventory: [...prev.inventory, ...inventory],
+        variables: mergedVariables,
+        isCharacterSetupComplete: true,
+      };
+    });
   }, []);
 
   // Update stats directly (for editable stats UI)
@@ -283,10 +296,7 @@ export function useGamebook() {
         if (item) return item.name;
       }
     }
-    // Check preset items
-    if (gamebookData?.presets?.items?.[itemId]) {
-      return gamebookData.presets.items[itemId].name;
-    }
+    // No preset items in new structure - items are in root items array
     return itemId;
   }, [gamebookData]);
 
@@ -512,22 +522,20 @@ export function useGamebook() {
         initialVariables[key] = value;
       }
     }
-    if (gamebookData.player?.variables) {
-      for (const [key, value] of Object.entries(gamebookData.player.variables)) {
-        initialVariables[key] = value;
+    // New structure: startingVariables in PlayerConfig
+    if (gamebookData.player?.startingVariables) {
+      for (const [key, value] of Object.entries(gamebookData.player.startingVariables)) {
+        initialVariables[key] = value as boolean | number | string;
       }
     }
 
+    // Initialize stats from presets (for character creation)
     const initialStats: Record<string, number> = {};
-    if (gamebookData.player?.stats) {
-      for (const [key, value] of Object.entries(gamebookData.player.stats)) {
-        initialStats[key] = value;
-      }
-    }
-    if (gamebookData.presets?.stats) {
-      for (const [key, preset] of Object.entries(gamebookData.presets.stats)) {
-        if (initialStats[key] === undefined) {
-          initialStats[key] = preset.default;
+    if (gamebookData.presets?.stats && gamebookData.player?.useStats) {
+      for (const statId of gamebookData.player.useStats) {
+        const preset = gamebookData.presets.stats[statId];
+        if (preset) {
+          initialStats[statId] = preset.default;
         }
       }
     }
@@ -535,8 +543,6 @@ export function useGamebook() {
     let initialInventory: string[] = [];
     if (gamebookData.player?.startingItems) {
       initialInventory = [...gamebookData.player.startingItems];
-    } else if (gamebookData.player?.inventory) {
-      initialInventory = [...gamebookData.player.inventory];
     }
 
     // Rebuild bookmark registry

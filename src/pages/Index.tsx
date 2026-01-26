@@ -1,6 +1,7 @@
 import { useGamebook } from '@/hooks/useGamebook';
 import { WelcomeScreen } from '@/components/gamebook/WelcomeScreen';
 import { StoryReader } from '@/components/gamebook/StoryReader';
+import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const Index = () => {
@@ -29,6 +30,7 @@ const Index = () => {
     purchaseItem,
     getItemDetails,
     getEnemyDetails,
+    completeCharacterSetup,
   } = useGamebook();
 
   if (!isPlaying || !gamebookData) {
@@ -39,8 +41,17 @@ const Index = () => {
     );
   }
 
-  // Character setup is no longer needed - stats are author-defined
-  // and always editable by the player
+  // Show character creation screen if not completed
+  if (!gameState.isCharacterSetupComplete) {
+    return (
+      <ThemeProvider>
+        <CharacterSetup
+          gamebookData={gamebookData}
+          onComplete={completeCharacterSetup}
+        />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider>

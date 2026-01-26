@@ -148,8 +148,9 @@ export const StoryBuilder = () => {
                     selectedPageId={builder.state.selectedPageId}
                     errors={builder.state.errors}
                     onUpdateMeta={builder.updateMeta}
-                    onUpdateInitialStats={builder.updateInitialStats}
-                    onUpdateInitialInventory={builder.updateInitialInventory}
+                    onUpdatePlayer={builder.updatePlayer}
+                    onUpdatePresets={builder.updatePresets}
+                    onUpdateSections={builder.updateSections}
                     onUpdatePage={builder.updatePage}
                     onAddPage={builder.addPage}
                     onDeletePage={builder.deletePage}

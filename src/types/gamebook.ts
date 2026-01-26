@@ -116,15 +116,21 @@ export interface GameMeta {
 }
 
 export interface StatPreset {
+  name: string; // Display name (e.g., "Health", "Strength")
   min: number;
   max: number;
   default: number;
+  description?: string; // Optional description
 }
 
-export interface ItemPreset {
-  name: string;
-  visible: boolean;
-  type?: 'consumable' | 'clue' | 'key' | 'token' | 'flag';
+// Character profile (premade stat + inventory combination)
+export interface CharacterProfile {
+  id: string;
+  name: string; // Profile name (e.g., "Warrior", "Mage", "Thief")
+  description?: string;
+  stats: Record<string, number>; // Stat values from presets
+  inventory?: string[]; // Starting items
+  variables?: Record<string, boolean | number | string>; // Starting variables
 }
 
 // Array-based item definition (new format)
@@ -138,18 +144,12 @@ export interface ItemDef {
   shopPrice?: number; // Price in shop (if item is sold in market)
 }
 
-export interface EnemyPreset {
-  name: string;
-  rank: number;
-  note?: string;
-}
-
 // Array-based enemy definition (new format)
 export interface EnemyDef {
   id: string;
   name: string;
   description?: string;
-  stats?: Record<string, number>; // Enemy stats (Health, Attack, Defense, etc.)
+  stats?: Record<string, number>; // Enemy stats from presets (Health, Attack, Defense, etc.)
   // Legacy fields (backward compatible)
   hayat?: number;
   attack?: number;
@@ -158,22 +158,28 @@ export interface EnemyDef {
 }
 
 export interface GamePresets {
-  stats?: Record<string, StatPreset>;
-  variables?: Record<string, boolean | number | string>;
-  items?: Record<string, ItemPreset>;
-  enemies?: Record<string, EnemyPreset>;
+  stats?: Record<string, StatPreset>; // Stat definitions only
+  variables?: Record<string, boolean | number | string>; // Global variables
+  profiles?: CharacterProfile[]; // Premade character profiles
 }
 
 export interface PlayerConfig {
-  statMode?: 'preset' | 'custom' | 'preset_or_custom';
-  customPool?: number;
+  // Character creation mode
+  creationMode?: 'sliders' | 'profiles' | 'both'; // How players create characters
+  allowCustomName?: boolean; // Allow player to name their character
+  totalStatPoints?: number; // For point-buy system (optional)
+  
+  // Which stats to use (references presets)
+  useStats?: string[]; // Array of stat IDs from presets (e.g., ["health", "strength", "magic"])
+  
+  // Default profile (if no character creation)
+  defaultProfile?: string; // Profile ID to use if no character creation
+  
+  // Starting inventory (if not using profiles)
   startingItems?: string[];
-  // New format: direct stat values
-  stats?: Record<string, number>;
-  // New format: direct variable values
-  variables?: Record<string, boolean | number | string>;
-  // New format: direct inventory
-  inventory?: string[];
+  
+  // Starting variables (if not using profiles)
+  startingVariables?: Record<string, boolean | number | string>;
 }
 
 export interface Section {

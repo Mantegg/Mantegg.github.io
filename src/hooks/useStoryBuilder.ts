@@ -122,6 +122,17 @@ export const useStoryBuilder = () => {
     }));
   }, []);
 
+  const updatePlayer = useCallback((player: GamebookData['player']) => {
+    setState(prev => ({
+      ...prev,
+      gamebookData: {
+        ...prev.gamebookData,
+        player,
+      },
+      isDirty: true,
+    }));
+  }, []);
+
   const addPage = useCallback((pageId?: number | string) => {
     const pages = state.gamebookData.pages || [];
     
@@ -571,6 +582,24 @@ export const useStoryBuilder = () => {
     setState(prev => ({ ...prev, previewState }));
   }, []);
 
+  // === PRESETS ===
+  const updatePresets = useCallback((presets: GamebookData['presets']) => {
+    setState(prev => ({
+      ...prev,
+      gamebookData: { ...prev.gamebookData, presets },
+      isDirty: true,
+    }));
+  }, []);
+
+  // === SECTIONS ===
+  const updateSections = useCallback((sections: GamebookData['sections']) => {
+    setState(prev => ({
+      ...prev,
+      gamebookData: { ...prev.gamebookData, sections },
+      isDirty: true,
+    }));
+  }, []);
+
   return {
     state,
     setMode,
@@ -579,6 +608,9 @@ export const useStoryBuilder = () => {
     updateMeta,
     updateInitialStats,
     updateInitialInventory,
+    updatePlayer,
+    updatePresets,
+    updateSections,
     addPage,
     updatePage,
     deletePage,
@@ -611,18 +643,26 @@ function createBlankTemplate(): GamebookData {
       version: '1.0',
       storyId: uuidv4(),
     },
-    player: {
+    presets: {
       stats: {
-        SKILL: 10,
-        STAMINA: 20,
-        LUCK: 10,
+        health: { name: 'Health', min: 1, max: 100, default: 50, description: 'Your life force' },
+        strength: { name: 'Strength', min: 1, max: 20, default: 10, description: 'Physical power' },
+        magic: { name: 'Magic', min: 1, max: 20, default: 10, description: 'Magical ability' },
       },
-      inventory: [],
+      variables: {},
+      profiles: [],
     },
+    player: {
+      creationMode: 'both',
+      allowCustomName: true,
+      useStats: ['health', 'strength', 'magic'],
+      startingItems: [],
+    },
+    sections: [],
     pages: [
       {
         id: 1,
-        text: 'Your adventure begins here...',
+        text: '<p>Your adventure begins here...</p>',
         choices: [],
       },
     ],

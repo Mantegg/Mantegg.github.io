@@ -18,16 +18,37 @@ const sampleTemplate: GamebookData = {
     version: "1.0",
     storyId: "550e8400-e29b-41d4-a716-446655440999"
   },
-  player: {
+  presets: {
     stats: {
-      "Health": 10,
-      "Luck": 5
+      "health": {
+        name: "Health",
+        min: 1,
+        max: 20,
+        default: 10,
+        description: "Your life force"
+      },
+      "luck": {
+        name: "Luck",
+        min: 1,
+        max: 10,
+        default: 5,
+        description: "Fortune favors the lucky"
+      }
     },
     variables: {
       "has_key": false,
       "solved_puzzle": false
-    },
-    startingItems: ["torch"]
+    }
+  },
+  player: {
+    creationMode: "sliders",
+    allowCustomName: true,
+    useStats: ["health", "luck"],
+    startingItems: ["torch"],
+    startingVariables: {
+      "has_key": false,
+      "solved_puzzle": false
+    }
   },
   items: [
     { id: "torch", name: "Torch", visible: true, type: "consumable" },
@@ -119,7 +140,8 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         let data: unknown;
         try {
           data = JSON.parse(content);
-        } catch {
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
           setError('Failed to parse JSON file. Please check for syntax errors.');
           return;
         }
@@ -127,6 +149,7 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         // Early structure validation - fail fast with clear messages
         const structureCheck = validateGamebookStructure(data);
         if (!structureCheck.valid) {
+          console.error('Structure validation failed:', structureCheck.error);
           setError(structureCheck.error || 'Invalid gamebook file.');
           return;
         }
@@ -138,6 +161,7 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         
         if (!validation.valid) {
           const errors = validation.errors.filter(e => e.type === 'error');
+          console.error('Validation errors:', errors);
           setError(errors.map(e => `${e.message}${e.context ? ` (${e.context})` : ''}`).join('\n'));
           return;
         }
@@ -148,10 +172,16 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
           setWarnings(warningsList);
         }
 
+        console.log('Loading gamebook:', gamebookData.meta?.title);
         onLoadStory(gamebookData);
-      } catch {
+      } catch (err) {
+        console.error('Unexpected error:', err);
         setError('An unexpected error occurred while processing the file.');
       }
+    };
+    reader.onerror = () => {
+      console.error('FileReader error');
+      setError('Failed to read the file.');
     };
     reader.readAsText(file);
   }, [onLoadStory]);
@@ -165,8 +195,13 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
-      handleFile(file);
+    if (file) {
+      // Check file extension instead of MIME type (more reliable)
+      if (file.name.endsWith('.json')) {
+        handleFile(file);
+      } else {
+        setError('Please drop a valid JSON file (.json extension required).');
+      }
     } else {
       setError('Please drop a valid JSON file.');
     }

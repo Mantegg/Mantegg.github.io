@@ -6,6 +6,8 @@ import { PlayerEditor } from './editors/PlayerEditor';
 import { PageEditor } from './editors/PageEditor';
 import { ItemsEditor } from './editors/ItemsEditor';
 import { EnemiesEditor } from './editors/EnemiesEditor';
+import { PresetsEditor } from './editors/PresetsEditor';
+import { SectionsEditor } from './editors/SectionsEditor';
 
 interface FormEditorProps {
   section: BuilderSection;
@@ -13,8 +15,9 @@ interface FormEditorProps {
   selectedPageId: number | string | null;
   errors: ValidationError[];
   onUpdateMeta: (updates: Partial<GamebookData['meta']>) => void;
-  onUpdateInitialStats: (stats: Record<string, number>) => void;
-  onUpdateInitialInventory: (inventory: string[]) => void;
+  onUpdatePlayer: (player: GamebookData['player']) => void;
+  onUpdatePresets: (presets: GamebookData['presets']) => void;
+  onUpdateSections: (sections: GamebookData['sections']) => void;
   onUpdatePage: (pageId: number | string, updates: Partial<Page>) => void;
   onAddPage: (pageId?: number | string) => number | string;
   onDeletePage: (pageId: number | string) => void;
@@ -47,8 +50,9 @@ export const FormEditor = (props: FormEditorProps) => {
         {section === 'player' && (
           <PlayerEditor
             player={gamebookData.player}
-            onUpdateStats={props.onUpdateInitialStats}
-            onUpdateInventory={props.onUpdateInitialInventory}
+            presets={gamebookData.presets || {}}
+            items={gamebookData.items || []}
+            onUpdate={props.onUpdatePlayer}
             errors={errors.filter(e => e.section === 'player')}
           />
         )}
@@ -107,11 +111,20 @@ export const FormEditor = (props: FormEditorProps) => {
           />
         )}
 
-        {(section === 'preset' || section === 'sections') && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground mb-2">{section.charAt(0).toUpperCase() + section.slice(1)} Editor</p>
-            <p className="text-sm text-muted-foreground">Coming soon</p>
-          </div>
+        {section === 'preset' && (
+          <PresetsEditor
+            presets={gamebookData.presets || {}}
+            items={gamebookData.items || []}
+            onUpdate={props.onUpdatePresets}
+          />
+        )}
+
+        {section === 'sections' && (
+          <SectionsEditor
+            sections={gamebookData.sections as any[] || []}
+            pages={gamebookData.pages || []}
+            onUpdate={props.onUpdateSections}
+          />
         )}
       </div>
     </ScrollArea>
