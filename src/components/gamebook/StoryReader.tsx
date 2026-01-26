@@ -121,14 +121,19 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      // Create a new choice object for navigation with win effects
-      const winChoice: Choice = {
-        text: pendingCombatChoice.text,
-        nextPageId: pendingCombatChoice.combat.winPageId,
-        effects: pendingCombatChoice.combat.winEffects,
-      };
-      
-      makeChoice(winChoice);
+      // Apply win effects if any
+      if (pendingCombatChoice.combat.winEffects) {
+        makeChoice({
+          ...pendingCombatChoice,
+          effects: pendingCombatChoice.combat.winEffects,
+          to: String(pendingCombatChoice.combat.winPageId),
+        });
+      } else {
+        makeChoice({
+          ...pendingCombatChoice,
+          to: String(pendingCombatChoice.combat.winPageId),
+        });
+      }
       
       setCombatDialogOpen(false);
       setPendingCombatChoice(null);
@@ -140,14 +145,19 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      // Create a new choice object for navigation with lose effects
-      const loseChoice: Choice = {
-        text: pendingCombatChoice.text,
-        nextPageId: pendingCombatChoice.combat.losePageId,
-        effects: pendingCombatChoice.combat.loseEffects,
-      };
-      
-      makeChoice(loseChoice);
+      // Apply lose effects if any
+      if (pendingCombatChoice.combat.loseEffects) {
+        makeChoice({
+          ...pendingCombatChoice,
+          effects: pendingCombatChoice.combat.loseEffects,
+          to: String(pendingCombatChoice.combat.losePageId),
+        });
+      } else {
+        makeChoice({
+          ...pendingCombatChoice,
+          to: String(pendingCombatChoice.combat.losePageId),
+        });
+      }
       
       setCombatDialogOpen(false);
       setPendingCombatChoice(null);

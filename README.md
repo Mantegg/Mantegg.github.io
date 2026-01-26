@@ -353,13 +353,14 @@ Contributions are welcome! Here's how you can help:
 
 ## 📝 License
 
-This project is part of the Lovable platform. See LICENSE file for details.
+This project is open source. See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- Built with [Lovable](https://lovable.dev)
 - UI components from [shadcn/ui](https://ui.shadcn.com)
 - Styled with [Tailwind CSS](https://tailwindcss.com)
+- Rich text editing with [TipTap](https://tiptap.dev)
+- Visual flow editor with [ReactFlow](https://reactflow.dev)
 
 ## 📞 Support
 

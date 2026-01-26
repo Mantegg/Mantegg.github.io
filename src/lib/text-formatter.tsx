@@ -1,17 +1,44 @@
 import React from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 
 /**
- * Formats gamebook text with basic markdown-like styling.
+ * Formats gamebook text with support for both HTML (from TipTap) and markdown-like styling.
  * Supports:
- * - **bold** text
- * - _italic_ or *italic* text
- * - Line breaks (\n\n for paragraphs)
+ * - HTML content from TipTap rich text editor
+ * - **bold** text (markdown fallback)
+ * - _italic_ or *italic* text (markdown fallback)
+ * - Line breaks (\n\n for paragraphs in plain text)
  * 
  * This is rendering only - no game logic.
  */
 export function formatText(text: string): React.ReactNode {
   if (!text) return null;
 
+  // Check if text contains HTML tags (from TipTap)
+  const hasHtml = /<[^>]+>/.test(text);
+
+  if (hasHtml) {
+    // Sanitize and render HTML content
+    const sanitized = DOMPurify.sanitize(text, {
+      ALLOWED_TAGS: [
+        'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'ul', 'ol', 'li',
+        'blockquote', 'hr',
+        'a', 'span', 'div'
+      ],
+      ALLOWED_ATTR: ['class', 'href', 'target', 'rel']
+    });
+
+    return (
+      <div 
+        className="prose prose-sm max-w-none dark:prose-invert"
+        dangerouslySetInnerHTML={{ __html: sanitized }}
+      />
+    );
+  }
+
+  // Fallback to markdown-like formatting for plain text
   // Split by double newlines for paragraphs
   const paragraphs = text.split(/\n\n+/);
 

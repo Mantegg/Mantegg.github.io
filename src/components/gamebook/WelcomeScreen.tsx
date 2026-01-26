@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
-import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle, Hammer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { GamebookData, ValidationError } from '@/types/gamebook';
 import { validateGamebookStructure, validateGamebook } from '@/lib/gamebook-validator';
+import { useNavigate } from 'react-router-dom';
 
 interface WelcomeScreenProps {
   onLoadStory: (data: GamebookData) => void;
@@ -17,16 +18,37 @@ const sampleTemplate: GamebookData = {
     version: "1.0",
     storyId: "550e8400-e29b-41d4-a716-446655440999"
   },
-  player: {
+  presets: {
     stats: {
-      "Health": 10,
-      "Luck": 5
+      "health": {
+        name: "Health",
+        min: 1,
+        max: 20,
+        default: 10,
+        description: "Your life force"
+      },
+      "luck": {
+        name: "Luck",
+        min: 1,
+        max: 10,
+        default: 5,
+        description: "Fortune favors the lucky"
+      }
     },
     variables: {
       "has_key": false,
       "solved_puzzle": false
-    },
-    startingItems: ["torch"]
+    }
+  },
+  player: {
+    creationMode: "sliders",
+    allowCustomName: true,
+    useStats: ["health", "luck"],
+    startingItems: ["torch"],
+    startingVariables: {
+      "has_key": false,
+      "solved_puzzle": false
+    }
   },
   items: [
     { id: "torch", name: "Torch", visible: true, type: "consumable" },
@@ -118,7 +140,8 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         let data: unknown;
         try {
           data = JSON.parse(content);
-        } catch {
+        } catch (parseError) {
+          console.error('JSON parse error:', parseError);
           setError('Failed to parse JSON file. Please check for syntax errors.');
           return;
         }
@@ -126,6 +149,7 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         // Early structure validation - fail fast with clear messages
         const structureCheck = validateGamebookStructure(data);
         if (!structureCheck.valid) {
+          console.error('Structure validation failed:', structureCheck.error);
           setError(structureCheck.error || 'Invalid gamebook file.');
           return;
         }
@@ -137,6 +161,7 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         
         if (!validation.valid) {
           const errors = validation.errors.filter(e => e.type === 'error');
+          console.error('Validation errors:', errors);
           setError(errors.map(e => `${e.message}${e.context ? ` (${e.context})` : ''}`).join('\n'));
           return;
         }
@@ -147,10 +172,16 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
           setWarnings(warningsList);
         }
 
+        console.log('Loading gamebook:', gamebookData.meta?.title);
         onLoadStory(gamebookData);
-      } catch {
+      } catch (err) {
+        console.error('Unexpected error:', err);
         setError('An unexpected error occurred while processing the file.');
       }
+    };
+    reader.onerror = () => {
+      console.error('FileReader error');
+      setError('Failed to read the file.');
     };
     reader.readAsText(file);
   }, [onLoadStory]);
@@ -164,8 +195,13 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files[0];
-    if (file && (file.type === 'application/json' || file.name.endsWith('.json'))) {
-      handleFile(file);
+    if (file) {
+      // Check file extension instead of MIME type (more reliable)
+      if (file.name.endsWith('.json')) {
+        handleFile(file);
+      } else {
+        setError('Please drop a valid JSON file (.json extension required).');
+      }
     } else {
       setError('Please drop a valid JSON file.');
     }
@@ -194,8 +230,17 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     onLoadStory(sampleTemplate);
   }, [onLoadStory]);
 
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <Button onClick={() => navigate('/builder')} size="lg" className="gap-2">
+          <Hammer className="h-5 w-5" />
+          Story Builder
+        </Button>
+      </div>
+      
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif font-bold text-foreground">Interactive Gamebook</h1>
