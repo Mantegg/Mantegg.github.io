@@ -1,0 +1,607 @@
+{
+  "meta": {
+    "title": "Complete Feature Test - Enhanced",
+    "author": "Test Suite v2",
+    "version": "2.0",
+    "storyId": "550e8400-e29b-41d4-a716-446655440001"
+  },
+
+  "theme": {
+    "defaultMode": "dark",
+    "backgroundGradient": "from-purple-900 via-blue-900 to-indigo-900"
+  },
+
+  "player": {
+    "stats": {
+      "Health": 25,
+      "Stamina": 20,
+      "Attack": 10,
+      "Defense": 8
+    },
+    "variables": {
+      "gold": 50,
+      "reputation": "unknown",
+      "wizard_met": false
+    },
+    "startingItems": ["basic_sword"]
+  },
+
+  "items": [
+    {
+      "id": "basic_sword",
+      "name": "Basic Sword",
+      "visible": true,
+      "type": "key",
+      "description": "A simple iron sword. It has seen better days but still serves you well."
+    },
+    {
+      "id": "health_potion",
+      "name": "Health Potion",
+      "visible": true,
+      "type": "consumable",
+      "description": "A red potion that restores 10 health points when consumed. Use it anytime from your inventory.",
+      "effects": {
+        "stats": {
+          "Health": 10
+        }
+      }
+    },
+    {
+      "id": "stamina_elixir",
+      "name": "Stamina Elixir",
+      "visible": true,
+      "type": "consumable",
+      "description": "A blue elixir that restores 5 stamina. Perfect for long battles.",
+      "effects": {
+        "stats": {
+          "Stamina": 5
+        }
+      }
+    },
+    {
+      "id": "magic_amulet",
+      "name": "Magic Amulet",
+      "visible": true,
+      "type": "key",
+      "description": "An ancient amulet radiating with mystical energy. It seems important."
+    },
+    {
+      "id": "steel_armor",
+      "name": "Steel Armor",
+      "visible": true,
+      "type": "key",
+      "description": "Heavy but reliable armor that increases your defense capabilities."
+    },
+    {
+      "id": "mysterious_key",
+      "name": "Mysterious Key",
+      "visible": true,
+      "type": "key",
+      "description": "A ornate key. You wonder what door it might open..."
+    }
+  ],
+
+  "enemies": [
+    {
+      "id": "goblin",
+      "name": "Goblin Raider",
+      "description": "A small but vicious goblin wielding a rusty dagger.",
+      "stats": {
+        "Health": 15,
+        "Attack": 6,
+        "Defense": 3
+      }
+    },
+    {
+      "id": "bandit",
+      "name": "Highway Bandit",
+      "description": "A dangerous outlaw who preys on travelers.",
+      "stats": {
+        "Health": 20,
+        "Attack": 8,
+        "Defense": 5
+      }
+    },
+    {
+      "id": "dragon",
+      "name": "Young Dragon",
+      "description": "Even young, this dragon is a formidable opponent with scales as hard as steel and breath that burns.",
+      "stats": {
+        "Health": 50,
+        "Attack": 15,
+        "Defense": 12
+      },
+      "note": "This is an extremely difficult battle. Make sure you're well prepared!"
+    }
+  ],
+
+  "sections": [
+    { "id": 0, "name": "Beginning" },
+    { "id": 1, "name": "The Village" },
+    { "id": 2, "name": "Adventures" },
+    { "id": 3, "name": "Endings" }
+  ],
+
+  "pages": [
+    {
+      "id": 1,
+      "section": 0,
+      "title": "Your Journey Begins",
+      "text": "Welcome, brave adventurer!\n\nThis is a comprehensive test of all gamebook features including:\n- **Consumable items** (use from inventory)\n- **Shop system** (buy items with gold)\n- **Combat encounters** (manual battle resolution)\n- **Item descriptions** (hover over items)\n- **And much more!**\n\nYou start with 50 gold coins and a basic sword. Your adventure awaits!",
+      "choices": [
+        {
+          "text": "Begin your adventure",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "section": 1,
+      "title": "Village Square",
+      "text": "You stand in the bustling village square. The market is busy with activity.\n\n_Try hovering your mouse over items in your inventory to see their descriptions!_\n\n**Available locations:**\n- General Store (buy consumables)\n- Armory (buy equipment)\n- Forest Path (adventures await)\n- Town Hall",
+      "choices": [
+        {
+          "text": "Visit the General Store",
+          "to": 3
+        },
+        {
+          "text": "Visit the Armory",
+          "to": 4
+        },
+        {
+          "text": "Head to the Forest",
+          "to": 10
+        },
+        {
+          "text": "Go to Town Hall",
+          "to": 5
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "section": 1,
+      "title": "General Store",
+      "text": "The shopkeeper greets you warmly. \"Welcome! Looking for supplies?\"\n\n**Shop Feature Test:** Items purchased here are removed from stock. The shop remembers your purchases even if you leave and come back!",
+      "shop": {
+        "currency": "gold",
+        "items": [
+          {
+            "itemId": "health_potion",
+            "price": 15,
+            "quantity": 3
+          },
+          {
+            "itemId": "stamina_elixir",
+            "price": 10,
+            "quantity": 5
+          }
+        ]
+      },
+      "choices": [
+        {
+          "text": "Return to village square",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "section": 1,
+      "title": "Armory",
+      "text": "The blacksmith shows you his finest wares. The smell of forge-fire and oil fills the air.",
+      "shop": {
+        "currency": "gold",
+        "items": [
+          {
+            "itemId": "steel_armor",
+            "price": 30,
+            "quantity": 1
+          },
+          {
+            "itemId": "magic_amulet",
+            "price": 25
+          }
+        ]
+      },
+      "choices": [
+        {
+          "text": "Return to village square",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "section": 1,
+      "title": "Town Hall",
+      "text": "The village elder sits behind a large oak desk. \"Ah, an adventurer! We have reports of goblins in the forest. Will you help us?\"\n\n_This will test the combat system!_",
+      "choices": [
+        {
+          "text": "Accept the quest",
+          "effects": {
+            "variables": {
+              "has_quest": true
+            }
+          },
+          "to": 2
+        },
+        {
+          "text": "Maybe later",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "section": 2,
+      "title": "Forest Path",
+      "text": "You enter the dense forest. Birds chirp overhead, but you sense danger nearby.\n\n**Consumable Item Test:** If you have health potions or stamina elixirs in your inventory, you can use them anytime by clicking on them!",
+      "choices": [
+        {
+          "text": "Continue deeper into the forest",
+          "to": 11
+        },
+        {
+          "text": "Search for herbs (healing)",
+          "effects": {
+            "stats": {
+              "Health": 5
+            }
+          },
+          "to": 10
+        },
+        {
+          "text": "Return to village",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "section": 2,
+      "title": "Goblin Encounter!",
+      "text": "A **Goblin Raider** jumps out from behind a tree, brandishing a rusty dagger!\n\n**Combat System Test:**\nWhen you choose to fight, a dialog will appear showing:\n- Enemy stats\n- Your current stats\n- A place to enter your stats after battle\n- Victory or Defeat buttons\n\nFight the battle manually (with dice, imagination, or another system), then input the results!",
+      "choices": [
+        {
+          "text": "Fight the Goblin!",
+          "combat": {
+            "enemyId": "goblin",
+            "winPageId": 12,
+            "losePageId": 13,
+            "winEffects": {
+              "variables": {
+                "gold": 10
+              }
+            }
+          }
+        },
+        {
+          "text": "Try to sneak past (requires Stamina 15+)",
+          "requires": {
+            "stats": {
+              "Stamina": {
+                "gte": 15
+              }
+            }
+          },
+          "effects": {
+            "stats": {
+              "Stamina": -5
+            }
+          },
+          "to": 14
+        },
+        {
+          "text": "Try to sneak past (requires Stamina 15+)",
+          "to": 13
+        },
+        {
+          "text": "Flee back to the village",
+          "effects": {
+            "stats": {
+              "Stamina": -3
+            }
+          },
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 12,
+      "section": 2,
+      "title": "Victory!",
+      "text": "You have defeated the Goblin Raider! Among its belongings, you find **10 gold coins**.\n\n_Your stats have been updated based on what you entered in the combat dialog._\n\n**Note:** You can edit your stats anytime from the sidebar if needed!",
+      "choices": [
+        {
+          "text": "Continue exploring",
+          "to": 14
+        },
+        {
+          "text": "Return to village to rest",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 13,
+      "section": 2,
+      "title": "Defeat...",
+      "text": "The goblin overpowers you! You manage to escape but you're badly wounded.\n\n_Remember: You can use consumable items from your inventory to heal!_",
+      "choices": [
+        {
+          "text": "Retreat to the village",
+          "to": 2
+        },
+        {
+          "text": "Try again",
+          "to": 11
+        }
+      ]
+    },
+
+    {
+      "id": 14,
+      "section": 2,
+      "title": "Deeper in the Forest",
+      "text": "You venture deeper into the forest and discover an ancient shrine. A **Magic Amulet** rests on the altar!\n\n_But wait..._ If you already bought it from the shop, you recognize this is a different amulet.",
+      "choices": [
+        {
+          "text": "Take the amulet",
+          "effects": {
+            "itemsAdd": ["magic_amulet"]
+          },
+          "to": 15
+        },
+        {
+          "text": "Leave it and continue",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 15,
+      "section": 2,
+      "title": "Crossroads",
+      "text": "The path splits. You can:\n- Head to the **Mountain Pass** (dangerous!)\n- Visit the **Hidden Merchant** (special shop)\n- Return to **Village**",
+      "choices": [
+        {
+          "text": "Take the Mountain Pass",
+          "to": 20
+        },
+        {
+          "text": "Find the Hidden Merchant",
+          "to": 16
+        },
+        {
+          "text": "Return to village",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 16,
+      "section": 2,
+      "title": "Hidden Merchant",
+      "text": "You find a mysterious merchant in a hidden grove. His wares are rare and valuable.\n\n\"Ah, a true adventurer! I have items you won't find anywhere else.\"",
+      "shop": {
+        "currency": "gold",
+        "items": [
+          {
+            "itemId": "mysterious_key",
+            "price": 40,
+            "quantity": 1
+          },
+          {
+            "itemId": "health_potion",
+            "price": 12
+          }
+        ]
+      },
+      "choices": [
+        {
+          "text": "Leave",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 20,
+      "section": 2,
+      "title": "Mountain Pass",
+      "text": "The mountain path is treacherous. As you climb, you encounter a **Highway Bandit** blocking your way!\n\n\"Your gold or your life, traveler!\"",
+      "choices": [
+        {
+          "text": "Fight the Bandit!",
+          "combat": {
+            "enemyId": "bandit",
+            "winPageId": 21,
+            "losePageId": 22,
+            "winEffects": {
+              "variables": {
+                "gold": 25,
+                "reputation": "hero"
+              },
+              "itemsAdd": ["mysterious_key"]
+            },
+            "loseEffects": {
+              "variables": {
+                "gold": -20
+              }
+            }
+          }
+        },
+        {
+          "text": "Pay 20 gold to pass safely",
+          "requires": {
+            "variables": {
+              "gold": 20
+            }
+          },
+          "effects": {
+            "variables": {
+              "gold": -20
+            }
+          },
+          "to": 23
+        },
+        {
+          "text": "Try to pay (don't have enough gold)",
+          "to": 22
+        },
+        {
+          "text": "Retreat",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 21,
+      "section": 2,
+      "title": "Bandit Defeated!",
+      "text": "You have defeated the Highway Bandit! You find:\n- **25 gold coins**\n- A **Mysterious Key**\n\nYour reputation as a hero grows!",
+      "choices": [
+        {
+          "text": "Continue up the mountain",
+          "to": 25
+        },
+        {
+          "text": "Return to explore more",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 22,
+      "section": 2,
+      "title": "Robbed!",
+      "text": "The bandit takes your gold and lets you go.\n\n_You lost 20 gold coins!_",
+      "choices": [
+        {
+          "text": "Continue, broke but alive",
+          "to": 23
+        },
+        {
+          "text": "Return defeated",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 23,
+      "section": 2,
+      "title": "Mountain Summit",
+      "text": "You reach the mountain summit and find an ancient temple entrance.\n\nThere's a keyhole in the door...",
+      "choices": [
+        {
+          "text": "Use the Mysterious Key",
+          "conditions": {
+            "items": ["mysterious_key"]
+          },
+          "to": 30
+        },
+        {
+          "text": "Try to open without key",
+          "to": 24
+        },
+        {
+          "text": "Head back down",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 24,
+      "section": 2,
+      "title": "Locked Door",
+      "text": "The door won't budge without the key. You'll need to find it elsewhere.",
+      "choices": [
+        {
+          "text": "Return",
+          "to": 23
+        }
+      ]
+    },
+
+    {
+      "id": 25,
+      "section": 2,
+      "title": "Dragon's Lair",
+      "text": "You discover a cave... and inside, a **Young Dragon** guards a massive treasure hoard!\n\nThis will be your greatest challenge yet.",
+      "choices": [
+        {
+          "text": "Fight the Dragon! (HARD BATTLE)",
+          "combat": {
+            "enemyId": "dragon",
+            "winPageId": 40,
+            "losePageId": 41,
+            "winEffects": {
+              "variables": {
+                "gold": 100,
+                "reputation": "legend"
+              }
+            }
+          }
+        },
+        {
+          "text": "This is too dangerous, retreat",
+          "to": 23
+        }
+      ]
+    },
+
+    {
+      "id": 30,
+      "section": 3,
+      "title": "Temple Treasure",
+      "text": "You unlock the temple and find incredible treasures!\n\n**Congratulations!** You've successfully tested:\n✓ Shop system\n✓ Combat system\n✓ Consumable items\n✓ Item descriptions\n✓ Currency management\n✓ Multiple paths\n\nThis is a **soft ending** - you can restart to try other paths!",
+      "effects": {
+        "variables": {
+          "gold": 200
+        }
+      },
+      "ending": {
+        "type": "soft"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 40,
+      "section": 3,
+      "title": "Dragon Slayer!",
+      "text": "**INCREDIBLE!** You have defeated the Young Dragon!\n\nThe treasure hoard is yours:\n- **100 gold coins**\n- Priceless artifacts\n- The title of **DRAGON SLAYER**\n\nSongs will be sung of your legendary victory for generations!\n\n**LEGENDARY ENDING ACHIEVED!**\n\nYou've tested ALL features including the hardest combat in the game!\n\n_This is a HARD ending - your adventure is complete!_",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 41,
+      "section": 3,
+      "title": "Brave But Fallen",
+      "text": "The dragon proves too powerful. You fought bravely, but this is where your journey ends.\n\nYou can restart and try a different path, perhaps gathering more resources first!\n\n_This is a HARD ending._",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    }
+  ]
+}

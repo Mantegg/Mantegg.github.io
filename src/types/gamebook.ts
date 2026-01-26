@@ -17,6 +17,16 @@ export interface Choice {
   inputGate?: InputGate; // Alternative input format
   failurePageId?: number;
   note?: string; // Author note (e.g., "Resolve combat manually")
+  // Combat system
+  combat?: CombatChoice; // Trigger combat encounter
+}
+
+export interface CombatChoice {
+  enemyId: string; // Reference to enemy in enemies array
+  winPageId: number | string; // Page to go to on victory
+  losePageId: number | string; // Page to go to on defeat
+  winEffects?: PageEffects; // Effects applied on victory
+  loseEffects?: PageEffects; // Effects applied on defeat
 }
 
 export interface ChoiceRequires {
@@ -60,6 +70,19 @@ export interface Page {
   effects?: PageEffects;
   ending?: EndingConfig;
   inputGate?: InputGate; // Page-level input gate
+  // Market system
+  shop?: ShopConfig; // If present, this page is a market
+}
+
+export interface ShopConfig {
+  currency: string; // Variable name used as currency (e.g., "coins", "gold")
+  items: ShopItem[]; // Items available for purchase
+}
+
+export interface ShopItem {
+  itemId: string; // Reference to item in items array
+  price: number; // Cost in currency
+  quantity?: number; // Available stock (optional, unlimited if not specified)
 }
 
 export interface GamebookData {
@@ -89,6 +112,7 @@ export interface GameMeta {
   title?: string;
   author?: string;
   version?: string;
+  storyId?: string; // Unique identifier for the story (e.g., UUID)
 }
 
 export interface StatPreset {
@@ -109,6 +133,9 @@ export interface ItemDef {
   name: string;
   visible?: boolean;
   type?: 'consumable' | 'clue' | 'key' | 'token' | 'flag';
+  description?: string; // Optional description shown on hover
+  effects?: PageEffects; // Effects when consumed (for consumable items)
+  shopPrice?: number; // Price in shop (if item is sold in market)
 }
 
 export interface EnemyPreset {
@@ -121,6 +148,9 @@ export interface EnemyPreset {
 export interface EnemyDef {
   id: string;
   name: string;
+  description?: string;
+  stats?: Record<string, number>; // Enemy stats (Health, Attack, Defense, etc.)
+  // Legacy fields (backward compatible)
   hayat?: number;
   attack?: number;
   rank?: number;
@@ -196,6 +226,7 @@ export interface EndingConfig {
 export interface SaveSlot {
   id: number;
   name: string;
+  storyId: string; // Unique story identifier
   storyTitle: string;
   currentPageId: number | string;
   pagePreview: string;
@@ -209,6 +240,8 @@ export interface SaveSlot {
   visitedPages?: (number | string)[];
   // Theme preference
   themeMode?: 'light' | 'dark';
+  // Shop state
+  shopInventories?: Record<string, Record<string, number>>;
 }
 
 export interface GameState {
@@ -223,6 +256,8 @@ export interface GameState {
   isCharacterSetupComplete: boolean;
   // Bookmark registry
   bookmarks: Record<string, number | string>;
+  // Shop state (tracks quantity of items in shops)
+  shopInventories: Record<string, Record<string, number>>; // pageId -> itemId -> quantity
 }
 
 // ===== VALIDATION =====

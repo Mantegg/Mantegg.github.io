@@ -14,6 +14,7 @@ const createInitialState = (): GameState => ({
   visitedPages: new Set<number | string>(),
   isCharacterSetupComplete: false,
   bookmarks: {},
+  shopInventories: {},
 });
 
 // Normalize gamebook data to unified page format
@@ -112,6 +113,20 @@ export function useGamebook() {
       }
     }
 
+    // Initialize shop inventories from pages
+    const shopInventories: Record<string, Record<string, number>> = {};
+    for (const page of pages) {
+      if (page.shop) {
+        const pageId = String(page.id);
+        shopInventories[pageId] = {};
+        for (const shopItem of page.shop.items) {
+          if (shopItem.quantity !== undefined) {
+            shopInventories[pageId][shopItem.itemId] = shopItem.quantity;
+          }
+        }
+      }
+    }
+
     const initialState: GameState = {
       currentPageId: firstPageId,
       inventory: initialInventory,
@@ -122,6 +137,7 @@ export function useGamebook() {
       visitedPages: new Set([firstPageId]),
       isCharacterSetupComplete: true, // Always complete - no preset selection needed
       bookmarks,
+      shopInventories,
     };
 
     setGameState(initialState);
@@ -531,6 +547,20 @@ export function useGamebook() {
       }
     }
 
+    // Reinitialize shop inventories
+    const shopInventories: Record<string, Record<string, number>> = {};
+    for (const page of pages) {
+      if (page.shop) {
+        const pageId = String(page.id);
+        shopInventories[pageId] = {};
+        for (const shopItem of page.shop.items) {
+          if (shopItem.quantity !== undefined) {
+            shopInventories[pageId][shopItem.itemId] = shopItem.quantity;
+          }
+        }
+      }
+    }
+
     setGameState({
       currentPageId: firstPageId,
       inventory: initialInventory,
@@ -541,6 +571,7 @@ export function useGamebook() {
       visitedPages: new Set([firstPageId]),
       isCharacterSetupComplete: true,
       bookmarks,
+      shopInventories,
     });
   }, [gamebookData, normalizedPages]);
 
@@ -548,11 +579,26 @@ export function useGamebook() {
     const saved = localStorage.getItem(SAVE_SLOTS_KEY);
     if (!saved) return [];
     try {
-      return JSON.parse(saved);
+      const allSaves = JSON.parse(saved);
+      
+      // Filter saves for current story only
+      if (gamebookData) {
+        const currentStoryId = gamebookData.meta?.storyId || 
+                               `legacy-${gamebookData.meta?.title || gamebookData.title || 'untitled'}`;
+        return allSaves.filter((save: SaveSlot) => {
+          // Handle legacy saves without storyId
+          if (!save.storyId) {
+            return save.storyTitle === (gamebookData.meta?.title || gamebookData.title);
+          }
+          return save.storyId === currentStoryId;
+        });
+      }
+      
+      return allSaves;
     } catch {
       return [];
     }
-  }, []);
+  }, [gamebookData]);
 
   const saveGame = useCallback((slotId: number, name: string) => {
     if (!gamebookData) return;
@@ -561,11 +607,16 @@ export function useGamebook() {
     // Don't allow saving on hard endings
     if (currentPage?.ending?.type === 'hard') return;
 
+    // Generate storyId if not present (fallback for old stories)
+    const storyId = gamebookData.meta?.storyId || 
+                    `legacy-${gamebookData.meta?.title || gamebookData.title || 'untitled'}`;
+
     const preview = currentPage?.text.substring(0, 100) + '...' || '';
 
     const newSave: SaveSlot = {
       id: slotId,
       name,
+      storyId,
       storyTitle: gamebookData.meta?.title || gamebookData.title || 'Untitled Story',
       currentPageId: gameState.currentPageId,
       pagePreview: preview,
@@ -576,6 +627,7 @@ export function useGamebook() {
       variables: gameState.variables,
       playerName: gameState.playerName,
       visitedPages: Array.from(gameState.visitedPages),
+      shopInventories: gameState.shopInventories,
     };
 
     const slots = getSaveSlots().filter(s => s.id !== slotId);
@@ -584,6 +636,20 @@ export function useGamebook() {
   }, [gamebookData, gameState, getCurrentPage, getSaveSlots]);
 
   const loadGame = useCallback((slot: SaveSlot) => {
+    if (!gamebookData) return;
+    
+    // Verify the save belongs to current story
+    const currentStoryId = gamebookData.meta?.storyId || 
+                           `legacy-${gamebookData.meta?.title || gamebookData.title || 'untitled'}`;
+    
+    // Handle legacy saves without storyId
+    const saveStoryId = slot.storyId || `legacy-${slot.storyTitle}`;
+    
+    if (saveStoryId !== currentStoryId) {
+      console.error('Cannot load save from different story');
+      return;
+    }
+    
     // Load does NOT re-trigger effects
     // Rebuild bookmarks from current pages
     const bookmarks: Record<string, number | string> = {};
@@ -603,13 +669,23 @@ export function useGamebook() {
       visitedPages: new Set(slot.visitedPages || slot.history),
       isCharacterSetupComplete: true,
       bookmarks,
+      shopInventories: slot.shopInventories || {},
     });
-  }, [normalizedPages]);
+  }, [normalizedPages, gamebookData]);
 
   const deleteSave = useCallback((slotId: number) => {
-    const slots = getSaveSlots().filter(s => s.id !== slotId);
-    localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(slots));
-  }, [getSaveSlots]);
+    // Get ALL saves from localStorage (not just current story)
+    const saved = localStorage.getItem(SAVE_SLOTS_KEY);
+    if (!saved) return;
+    
+    try {
+      const allSlots = JSON.parse(saved);
+      const remainingSlots = allSlots.filter((s: SaveSlot) => s.id !== slotId);
+      localStorage.setItem(SAVE_SLOTS_KEY, JSON.stringify(remainingSlots));
+    } catch {
+      // If parse fails, do nothing
+    }
+  }, []);
 
   const exitStory = useCallback(() => {
     setIsPlaying(false);
@@ -641,6 +717,85 @@ export function useGamebook() {
     return !ending.isEnd || ending.type !== 'hard';
   }, [isEnding]);
 
+  // Consume a consumable item from inventory
+  const consumeItem = useCallback((itemId: string) => {
+    const item = gamebookData?.items?.find((i: any) => i.id === itemId);
+    if (!item || item.type !== 'consumable') return;
+    if (!gameState.inventory.includes(itemId)) return;
+
+    setGameState(prev => {
+      // Remove item from inventory
+      const newInventory = prev.inventory.filter(id => id !== itemId);
+      
+      // Apply item effects if any
+      let updates: Partial<GameState> = { inventory: newInventory };
+      if (item.effects) {
+        const effectUpdates = applyEffects(item.effects, prev);
+        updates = { ...updates, ...effectUpdates };
+      }
+
+      return {
+        ...prev,
+        ...updates,
+      };
+    });
+  }, [gamebookData, gameState.inventory, applyEffects]);
+
+  // Purchase item from shop
+  const purchaseItem = useCallback((pageId: number | string, itemId: string, price: number, currencyVar: string) => {
+    const currentCurrency = (gameState.variables[currencyVar] as number) || 0;
+    if (currentCurrency < price) return false; // Can't afford
+    if (gameState.inventory.includes(itemId)) return false; // Already have it
+
+    const pageIdStr = String(pageId);
+    const shopStock = gameState.shopInventories[pageIdStr]?.[itemId];
+    if (shopStock !== undefined && shopStock <= 0) return false; // Out of stock
+
+    setGameState(prev => {
+      const newVariables = { ...prev.variables };
+      newVariables[currencyVar] = currentCurrency - price;
+
+      const newInventory = [...prev.inventory, itemId];
+
+      const newShopInventories = { ...prev.shopInventories };
+      if (shopStock !== undefined) {
+        if (!newShopInventories[pageIdStr]) {
+          newShopInventories[pageIdStr] = {};
+        }
+        newShopInventories[pageIdStr][itemId] = shopStock - 1;
+      }
+
+      return {
+        ...prev,
+        variables: newVariables,
+        inventory: newInventory,
+        shopInventories: newShopInventories,
+      };
+    });
+
+    return true;
+  }, [gameState]);
+
+  // Get item details
+  const getItemDetails = useCallback((itemId: string) => {
+    if (gamebookData?.items) {
+      if (Array.isArray(gamebookData.items)) {
+        return gamebookData.items.find(i => i.id === itemId);
+      }
+    }
+    return undefined;
+  }, [gamebookData]);
+
+  // Get enemy details
+  const getEnemyDetails = useCallback((enemyId: string) => {
+    if (gamebookData?.enemies) {
+      if (Array.isArray(gamebookData.enemies)) {
+        return gamebookData.enemies.find(e => e.id === enemyId);
+      }
+    }
+    return undefined;
+  }, [gamebookData]);
+
   return {
     gamebookData,
     gameState,
@@ -665,5 +820,9 @@ export function useGamebook() {
     maxSaveSlots: MAX_SAVE_SLOTS,
     isEnding,
     canSave,
+    consumeItem,
+    purchaseItem,
+    getItemDetails,
+    getEnemyDetails,
   };
 }

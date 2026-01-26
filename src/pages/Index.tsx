@@ -24,6 +24,11 @@ const Index = () => {
     maxSaveSlots,
     canSave,
     updateStat,
+    updateStats,
+    consumeItem,
+    purchaseItem,
+    getItemDetails,
+    getEnemyDetails,
   } = useGamebook();
 
   if (!isPlaying || !gamebookData) {
@@ -57,6 +62,11 @@ const Index = () => {
         maxSaveSlots={maxSaveSlots}
         canSave={canSave}
         onUpdateStat={updateStat}
+        onUpdateStats={updateStats}
+        onConsumeItem={consumeItem}
+        onPurchaseItem={purchaseItem}
+        getItemDetails={getItemDetails}
+        getEnemyDetails={getEnemyDetails}
       />
     </ThemeProvider>
   );

@@ -1,43 +1,62 @@
-import { Package, BarChart3, Skull, Edit2, Check, X } from 'lucide-react';
+import { Package, BarChart3, Skull, Edit2, Check, X, Pill } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { GamebookData } from '@/types/gamebook';
+import { GamebookData, ItemDef } from '@/types/gamebook';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface InventoryPanelProps {
   inventory: string[];
   stats: Record<string, number>;
   gamebookData?: GamebookData | null;
   onUpdateStat?: (statName: string, value: number) => void;
+  onConsumeItem?: (itemId: string) => void;
 }
 
-export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat }: InventoryPanelProps) {
+export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat, onConsumeItem }: InventoryPanelProps) {
   const [enemiesOpen, setEnemiesOpen] = useState(false);
   const [editingStat, setEditingStat] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [consumeDialogOpen, setConsumeDialogOpen] = useState(false);
+  const [itemToConsume, setItemToConsume] = useState<ItemDef | null>(null);
   
   // Get items from both array and preset formats
-  const getItemInfo = (itemId: string): { name: string; visible: boolean; type?: string } => {
+  const getItemInfo = (itemId: string): ItemDef | { name: string; visible: boolean; type?: string } => {
     // Check array-based items first
     if (gamebookData?.items) {
       if (Array.isArray(gamebookData.items)) {
         const item = gamebookData.items.find(i => i.id === itemId);
-        if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+        if (item) return item;
       } else {
         // Object format: items: { "item_id": { name: "...", ... } }
-        const item = (gamebookData.items as Record<string, { name: string; visible?: boolean; type?: string }>)[itemId];
-        if (item) return { name: item.name, visible: item.visible !== false, type: item.type };
+        const item = (gamebookData.items as Record<string, ItemDef>)[itemId];
+        if (item) return { ...item, id: itemId };
       }
     }
     // Check preset items
     const preset = gamebookData?.presets?.items?.[itemId];
-    if (preset) return { name: preset.name, visible: preset.visible !== false, type: preset.type };
+    if (preset) return { id: itemId, name: preset.name, visible: preset.visible !== false, type: preset.type };
     // Default
-    return { name: itemId, visible: true };
+    return { id: itemId, name: itemId, visible: true };
   };
 
   // Filter visible items
@@ -170,20 +189,48 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat }:
             <Package className="h-4 w-4" />
             Inventory
           </h3>
-          <div className="flex flex-wrap gap-2">
-            {visibleItems.map((itemId) => {
-              const info = getItemInfo(itemId);
-              return (
-                <Badge
-                  key={itemId}
-                  variant={getItemBadgeVariant(info.type)}
-                  className="text-xs"
-                >
-                  {info.name}
-                </Badge>
-              );
-            })}
-          </div>
+          <TooltipProvider>
+            <div className="flex flex-wrap gap-2">
+              {visibleItems.map((itemId) => {
+                const info = getItemInfo(itemId);
+                const isConsumable = info.type === 'consumable';
+                
+                return (
+                  <Tooltip key={itemId}>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        <Badge
+                          variant={getItemBadgeVariant(info.type)}
+                          className={`text-xs ${isConsumable ? 'cursor-pointer hover:opacity-80' : ''}`}
+                          onClick={() => {
+                            if (isConsumable && 'effects' in info && onConsumeItem) {
+                              setItemToConsume(info as ItemDef);
+                              setConsumeDialogOpen(true);
+                            }
+                          }}
+                        >
+                          {isConsumable && <Pill className="w-3 h-3 mr-1" />}
+                          {info.name}
+                        </Badge>
+                      </div>
+                    </TooltipTrigger>
+                    {((('description' in info && info.description) || isConsumable)) && (
+                      <TooltipContent>
+                        <div className="max-w-xs space-y-1">
+                          {'description' in info && info.description && <p>{info.description}</p>}
+                          {isConsumable && 'effects' in info && (
+                            <p className="text-xs text-muted-foreground italic">
+                              Click to use this consumable item
+                            </p>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                );
+              })}
+            </div>
+          </TooltipProvider>
         </div>
       )}
 
@@ -224,6 +271,49 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat }:
           </CollapsibleContent>
         </Collapsible>
       )}
+
+      {/* Consume Item Confirmation Dialog */}
+      <AlertDialog open={consumeDialogOpen} onOpenChange={setConsumeDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Use {itemToConsume?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {itemToConsume?.description || 'Are you sure you want to consume this item?'}
+              {itemToConsume?.effects && (
+                <div className="mt-3 p-3 bg-muted rounded text-sm space-y-1">
+                  <p className="font-medium">Effects:</p>
+                  {itemToConsume.effects.stats && (
+                    <div>
+                      {Object.entries(itemToConsume.effects.stats).map(([stat, value]) => (
+                        <div key={stat}>
+                          {stat}: {value > 0 ? '+' : ''}{value}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {itemToConsume.effects.itemsAdd && (
+                    <div>Adds items: {itemToConsume.effects.itemsAdd.join(', ')}</div>
+                  )}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (itemToConsume && onConsumeItem) {
+                  onConsumeItem(itemToConsume.id);
+                }
+                setConsumeDialogOpen(false);
+                setItemToConsume(null);
+              }}
+            >
+              Use Item
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

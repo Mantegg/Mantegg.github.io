@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Menu, RotateCcw, LogOut, Trophy, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { GamebookData, GameState, Page, Choice, SaveSlot } from '@/types/gamebook';
+import { GamebookData, GameState, Page, Choice, SaveSlot, ItemDef, EnemyDef } from '@/types/gamebook';
 import { HistoryPanel } from './HistoryPanel';
 import { InventoryPanel } from './InventoryPanel';
 import { SaveLoadPanel } from './SaveLoadPanel';
@@ -10,6 +10,8 @@ import { ChoiceButton } from './ChoiceButton';
 import { InputDialog } from './InputDialog';
 import { DicePopup } from './DicePopup';
 import { ThemeControls } from './ThemeControls';
+import { CombatPopup } from './CombatPopup';
+import { ShopPanel } from './ShopPanel';
 import { useTheme, useApplyThemeConfig } from '@/contexts/ThemeContext';
 import { formatText } from '@/lib/text-formatter';
 
@@ -31,6 +33,11 @@ interface StoryReaderProps {
   maxSaveSlots: number;
   canSave: () => boolean;
   onUpdateStat?: (statName: string, value: number) => void;
+  onConsumeItem?: (itemId: string) => void;
+  onPurchaseItem?: (pageId: number | string, itemId: string, price: number, currencyVar: string) => boolean;
+  getItemDetails?: (itemId: string) => ItemDef | undefined;
+  getEnemyDetails?: (enemyId: string) => EnemyDef | undefined;
+  onUpdateStats?: (stats: Record<string, number>) => void;
 }
 
 export function StoryReader({
@@ -51,10 +58,18 @@ export function StoryReader({
   maxSaveSlots,
   canSave,
   onUpdateStat,
+  onConsumeItem,
+  onPurchaseItem,
+  getItemDetails,
+  getEnemyDetails,
+  onUpdateStats,
 }: StoryReaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inputDialogOpen, setInputDialogOpen] = useState(false);
   const [pendingInputChoice, setPendingInputChoice] = useState<Choice | null>(null);
+  const [combatDialogOpen, setCombatDialogOpen] = useState(false);
+  const [pendingCombatChoice, setPendingCombatChoice] = useState<Choice | null>(null);
+  const [currentEnemy, setCurrentEnemy] = useState<EnemyDef | null>(null);
 
   const { backgroundGradient } = useTheme();
   
@@ -74,6 +89,18 @@ export function StoryReader({
   const isHardEnding = endingType === 'hard';
 
   const handleChoiceClick = (choice: Choice) => {
+    // Handle combat choices
+    if (choice.combat && getEnemyDetails) {
+      const enemy = getEnemyDetails(choice.combat.enemyId);
+      if (enemy) {
+        setCurrentEnemy(enemy);
+        setPendingCombatChoice(choice);
+        setCombatDialogOpen(true);
+        return;
+      }
+    }
+    
+    // Handle input choices
     if (choice.input) {
       setPendingInputChoice(choice);
       setInputDialogOpen(true);
@@ -87,6 +114,56 @@ export function StoryReader({
       makeChoice(pendingInputChoice, correct);
       setPendingInputChoice(null);
       setInputDialogOpen(false);
+    }
+  };
+
+  const handleCombatWin = (finalStats: Record<string, number>) => {
+    if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
+      onUpdateStats(finalStats);
+      
+      // Create a new choice object for navigation with win effects
+      const winChoice: Choice = {
+        text: pendingCombatChoice.text,
+        nextPageId: pendingCombatChoice.combat.winPageId,
+        effects: pendingCombatChoice.combat.winEffects,
+      };
+      
+      makeChoice(winChoice);
+      
+      setCombatDialogOpen(false);
+      setPendingCombatChoice(null);
+      setCurrentEnemy(null);
+    }
+  };
+
+  const handleCombatLose = (finalStats: Record<string, number>) => {
+    if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
+      onUpdateStats(finalStats);
+      
+      // Create a new choice object for navigation with lose effects
+      const loseChoice: Choice = {
+        text: pendingCombatChoice.text,
+        nextPageId: pendingCombatChoice.combat.losePageId,
+        effects: pendingCombatChoice.combat.loseEffects,
+      };
+      
+      makeChoice(loseChoice);
+      
+      setCombatDialogOpen(false);
+      setPendingCombatChoice(null);
+      setCurrentEnemy(null);
+    }
+  };
+
+  const handleCombatCancel = () => {
+    setCombatDialogOpen(false);
+    setPendingCombatChoice(null);
+    setCurrentEnemy(null);
+  };
+
+  const handlePurchase = (itemId: string, price: number) => {
+    if (currentPage?.shop && onPurchaseItem) {
+      onPurchaseItem(currentPage.id, itemId, price, currentPage.shop.currency);
     }
   };
 
@@ -161,6 +238,7 @@ export function StoryReader({
                     stats={gameState.stats}
                     gamebookData={gamebookData}
                     onUpdateStat={onUpdateStat}
+                    onConsumeItem={onConsumeItem}
                   />
                   <HistoryPanel
                     history={gameState.history as (number | string)[]}
@@ -250,9 +328,25 @@ export function StoryReader({
                     canChoose={canChoose(choice)}
                     requirements={getChoiceRequirements(choice)}
                     hasInput={!!choice.input}
+                    hasCombat={!!choice.combat}
                     onClick={() => handleChoiceClick(choice)}
                   />
                 ))}
+              </div>
+            )}
+
+            {/* Shop Panel */}
+            {currentPage.shop && getItemDetails && (
+              <div className="mt-8 pt-6 border-t">
+                <ShopPanel
+                  shop={currentPage.shop}
+                  currentPageId={currentPage.id}
+                  playerCurrency={(gameState.variables[currentPage.shop.currency] as number) || 0}
+                  playerInventory={gameState.inventory}
+                  shopInventories={gameState.shopInventories}
+                  getItemDetails={getItemDetails}
+                  onPurchase={handlePurchase}
+                />
               </div>
             )}
           </div>
@@ -277,6 +371,18 @@ export function StoryReader({
           }}
           input={pendingInputChoice.input}
           onSubmit={handleInputSubmit}
+        />
+      )}
+
+      {/* Combat Dialog */}
+      {currentEnemy && (
+        <CombatPopup
+          open={combatDialogOpen}
+          enemy={currentEnemy}
+          playerStats={gameState.stats}
+          onWin={handleCombatWin}
+          onLose={handleCombatLose}
+          onCancel={handleCombatCancel}
         />
       )}
     </div>

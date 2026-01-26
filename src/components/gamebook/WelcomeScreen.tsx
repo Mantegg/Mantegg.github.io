@@ -14,7 +14,8 @@ const sampleTemplate: GamebookData = {
   meta: {
     title: "Sample Adventure",
     author: "Demo Author",
-    version: "1.0"
+    version: "1.0",
+    storyId: "550e8400-e29b-41d4-a716-446655440999"
   },
   player: {
     stats: {
