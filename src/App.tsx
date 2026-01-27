@@ -14,7 +14,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.PROD ? '/EGameBook' : '/'}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/builder" element={<StoryBuilder />} />

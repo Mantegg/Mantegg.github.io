@@ -747,6 +747,17 @@ export function useGamebook() {
     });
   }, [gamebookData, gameState.inventory, applyEffects]);
 
+  // Update a variable value
+  const updateVariable = useCallback((variableName: string, value: any) => {
+    setGameState(prev => ({
+      ...prev,
+      variables: {
+        ...prev.variables,
+        [variableName]: value,
+      },
+    }));
+  }, []);
+
   // Purchase item from shop
   const purchaseItem = useCallback((pageId: number | string, itemId: string, price: number, currencyVar: string) => {
     const currentCurrency = (gameState.variables[currencyVar] as number) || 0;
@@ -802,6 +813,55 @@ export function useGamebook() {
     return undefined;
   }, [gamebookData]);
 
+  // Export save as share code (for QR/text sharing)
+  const exportSaveAsCode = useCallback((saveData: GameState): string => {
+    const LZString = require('lz-string');
+    
+    const exportData = {
+      version: '1.0',
+      timestamp: Date.now(),
+      storyId: gamebookData?.meta?.storyId || 'unknown',
+      saveData: saveData,
+    };
+    
+    const json = JSON.stringify(exportData);
+    const compressed = LZString.compressToBase64(json);
+    
+    // Format as share code with dashes for readability
+    const chunks = compressed.match(/.{1,4}/g) || [];
+    return 'EGBK-' + chunks.slice(0, 4).join('-');
+  }, [gamebookData]);
+
+  // Import save from code
+  const importSaveFromCode = useCallback((code: string): GameState | null => {
+    try {
+      const LZString = require('lz-string');
+      const cleaned = code.replace(/^EGBK[:-]?/i, '').replace(/-/g, '');
+      const decompressed = LZString.decompressFromBase64(cleaned);
+      
+      if (!decompressed) return null;
+      
+      const data = JSON.parse(decompressed);
+      
+      // Validate story ID
+      if (data.storyId !== gamebookData?.meta?.storyId) {
+        console.error('Story ID mismatch');
+        return null;
+      }
+      
+      return data.saveData;
+    } catch (err) {
+      console.error('Failed to import save:', err);
+      return null;
+    }
+  }, [gamebookData]);
+
+  // Load game state directly (for imports)
+  const loadGameState = useCallback((newState: GameState) => {
+    setGameState(newState);
+    setIsPlaying(true);
+  }, []);
+
   return {
     gamebookData,
     gameState,
@@ -810,6 +870,7 @@ export function useGamebook() {
     completeCharacterSetup,
     updateStats,
     updateStat,
+    updateVariable,
     getCurrentPage,
     getPageById,
     getPageByBookmark,
@@ -830,5 +891,8 @@ export function useGamebook() {
     purchaseItem,
     getItemDetails,
     getEnemyDetails,
+    exportSaveAsCode,
+    importSaveFromCode,
+    loadGameState,
   };
 }

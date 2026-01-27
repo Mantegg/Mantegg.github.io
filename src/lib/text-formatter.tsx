@@ -2,24 +2,41 @@ import React from 'react';
 import DOMPurify from 'isomorphic-dompurify';
 
 /**
+ * Replace {variableName} placeholders with actual values
+ */
+export function replaceVariables(text: string, variables: Record<string, any>): string {
+  return text.replace(/\{([^}]+)\}/g, (match, variableName) => {
+    const value = variables[variableName];
+    return value !== undefined ? String(value) : match;
+  });
+}
+
+/**
  * Formats gamebook text with support for both HTML (from TipTap) and markdown-like styling.
  * Supports:
  * - HTML content from TipTap rich text editor
  * - **bold** text (markdown fallback)
  * - _italic_ or *italic* text (markdown fallback)
  * - Line breaks (\n\n for paragraphs in plain text)
+ * - Variable replacement {variableName}
  * 
  * This is rendering only - no game logic.
  */
-export function formatText(text: string): React.ReactNode {
+export function formatText(text: string, variables?: Record<string, any>): React.ReactNode {
   if (!text) return null;
 
+  // Replace variables if provided
+  let processedText = text;
+  if (variables) {
+    processedText = replaceVariables(text, variables);
+  }
+
   // Check if text contains HTML tags (from TipTap)
-  const hasHtml = /<[^>]+>/.test(text);
+  const hasHtml = /<[^>]+>/.test(processedText);
 
   if (hasHtml) {
     // Sanitize and render HTML content
-    const sanitized = DOMPurify.sanitize(text, {
+    const sanitized = DOMPurify.sanitize(processedText, {
       ALLOWED_TAGS: [
         'p', 'br', 'strong', 'em', 'u', 's', 'code', 'pre',
         'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
@@ -40,7 +57,7 @@ export function formatText(text: string): React.ReactNode {
 
   // Fallback to markdown-like formatting for plain text
   // Split by double newlines for paragraphs
-  const paragraphs = text.split(/\n\n+/);
+  const paragraphs = processedText.split(/\n\n+/);
 
   return paragraphs.map((paragraph, pIndex) => {
     // Split by single newlines within paragraphs

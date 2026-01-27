@@ -4,6 +4,7 @@ import { useStoryBuilder } from '@/hooks/useStoryBuilder';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { ArrowLeft, Play, Save, Download, Upload, AlertTriangle } from 'lucide-react';
 import { BuilderSidebar } from '@/components/builder/BuilderSidebar';
@@ -139,46 +140,52 @@ export const StoryBuilder = () => {
                 errors={builder.state.errors}
               />
               
-              <div className="flex-1 flex overflow-hidden">
+              <ResizablePanelGroup direction="horizontal" className="flex-1">
                 {/* Left: Form Editor */}
-                <div className="w-1/2 border-r overflow-auto">
-                  <FormEditor
-                    section={builder.state.selectedSection}
-                    gamebookData={builder.state.gamebookData}
-                    selectedPageId={builder.state.selectedPageId}
-                    errors={builder.state.errors}
-                    onUpdateMeta={builder.updateMeta}
-                    onUpdatePlayer={builder.updatePlayer}
-                    onUpdatePresets={builder.updatePresets}
-                    onUpdateSections={builder.updateSections}
-                    onUpdatePage={builder.updatePage}
-                    onAddPage={builder.addPage}
-                    onDeletePage={builder.deletePage}
-                    onDuplicatePage={builder.duplicatePage}
-                    onAddChoice={builder.addChoice}
-                    onUpdateChoice={builder.updateChoice}
-                    onDeleteChoice={builder.deleteChoice}
-                    onAddItem={builder.addItem}
-                    onUpdateItem={builder.updateItem}
-                    onDeleteItem={builder.deleteItem}
-                    onAddEnemy={builder.addEnemy}
-                    onUpdateEnemy={builder.updateEnemy}
-                    onDeleteEnemy={builder.deleteEnemy}
-                  />
-                </div>
+                <ResizablePanel defaultSize={50} minSize={30}>
+                  <div className="h-full overflow-auto">
+                    <FormEditor
+                      section={builder.state.selectedSection}
+                      gamebookData={builder.state.gamebookData}
+                      selectedPageId={builder.state.selectedPageId}
+                      errors={builder.state.errors}
+                      onUpdateMeta={builder.updateMeta}
+                      onUpdatePlayer={builder.updatePlayer}
+                      onUpdatePresets={builder.updatePresets}
+                      onUpdateSections={builder.updateSections}
+                      onUpdatePage={builder.updatePage}
+                      onAddPage={builder.addPage}
+                      onDeletePage={builder.deletePage}
+                      onDuplicatePage={builder.duplicatePage}
+                      onAddChoice={builder.addChoice}
+                      onUpdateChoice={builder.updateChoice}
+                      onDeleteChoice={builder.deleteChoice}
+                      onAddItem={builder.addItem}
+                      onUpdateItem={builder.updateItem}
+                      onDeleteItem={builder.deleteItem}
+                      onAddEnemy={builder.addEnemy}
+                      onUpdateEnemy={builder.updateEnemy}
+                      onDeleteEnemy={builder.deleteEnemy}
+                    />
+                  </div>
+                </ResizablePanel>
+
+                <ResizableHandle withHandle />
 
                 {/* Right: Visual Editor */}
-                <div className="w-1/2 overflow-hidden bg-muted/20">
-                  <VisualEditor
-                    gamebookData={builder.state.gamebookData}
-                    selectedPageId={builder.state.selectedPageId}
-                    onSelectPage={builder.setSelectedPageId}
-                    onAddChoice={builder.addChoice}
-                    onUpdateChoice={builder.updateChoice}
-                    errors={builder.state.errors}
-                  />
-                </div>
-              </div>
+                <ResizablePanel defaultSize={50} minSize={30}>
+                  <div className="h-full overflow-hidden bg-muted/20">
+                    <VisualEditor
+                      gamebookData={builder.state.gamebookData}
+                      selectedPageId={builder.state.selectedPageId}
+                      onSelectPage={builder.setSelectedPageId}
+                      onAddChoice={builder.addChoice}
+                      onUpdateChoice={builder.updateChoice}
+                      errors={builder.state.errors}
+                    />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
 
               {/* Validation Panel (bottom) */}
               {builder.state.errors.length > 0 && (

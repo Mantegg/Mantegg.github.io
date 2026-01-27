@@ -92,7 +92,7 @@ const PageNode = ({ data }: { data: any }) => {
         </div>
         
         <div className="text-xs text-muted-foreground line-clamp-2">
-          {data.text ? data.text.substring(0, 80) : 'No text'}
+          {data.text ? data.text.replace(/<[^>]+>/g, '').substring(0, 80) : 'No text'}
         </div>
         
         {data.choiceCount > 0 && (
@@ -166,26 +166,46 @@ export const VisualEditor = ({
       });
     });
 
-    // Calculate tree layout positions
+    // Calculate tree layout positions with improved spacing
     const positions = new Map<string, { x: number; y: number; level: number }>();
     const visited = new Set<string>();
     const levelCounts = new Map<number, number>();
+    const levelMaxY = new Map<number, number>(); // Track the maximum Y position per level
 
     const calculatePosition = (pageIdStr: string, level: number, parentY: number = 0) => {
       if (visited.has(pageIdStr)) return;
       visited.add(pageIdStr);
 
       const currentCount = levelCounts.get(level) || 0;
+      const currentMaxY = levelMaxY.get(level) || 0;
+      
+      // Improved spacing: use max of parentY and current level max to avoid overlaps
+      const y = Math.max(parentY, currentMaxY);
+      
       levelCounts.set(level, currentCount + 1);
+      levelMaxY.set(level, y + 250); // Reserve vertical space for this node
 
-      const x = level * 350; // Horizontal spacing (branch to right)
-      const y = parentY + (currentCount * 220); // Vertical spacing
+      const x = level * 400; // Increased horizontal spacing
 
       positions.set(pageIdStr, { x, y, level });
 
       const children = Array.from(childrenMap.get(pageIdStr) || []);
-      children.forEach((childId, index) => {
-        calculatePosition(childId, level + 1, y + (index * 220));
+      
+      // Sort children to maintain consistent layout
+      children.sort((a, b) => {
+        const pageA = pageMap.get(a);
+        const pageB = pageMap.get(b);
+        return (pageA?.id || 0) > (pageB?.id || 0) ? 1 : -1;
+      });
+      
+      // Calculate positions for children with proper vertical spacing
+      let childY = y;
+      children.forEach((childId) => {
+        calculatePosition(childId, level + 1, childY);
+        const childPos = positions.get(childId);
+        if (childPos) {
+          childY = childPos.y + 250; // Space out children vertically
+        }
       });
     };
 
@@ -199,11 +219,12 @@ export const VisualEditor = ({
     pages.forEach((page, index) => {
       const pageIdStr = String(page.id);
       if (!positions.has(pageIdStr)) {
-        const orphanLevel = 0;
+        // Place disconnected nodes to the far right
+        const orphanLevel = (levelMaxY.size || 0) + 2;
         const orphanCount = levelCounts.get(orphanLevel) || 0;
         positions.set(pageIdStr, {
-          x: orphanLevel * 350,
-          y: orphanCount * 220,
+          x: orphanLevel * 400,
+          y: orphanCount * 250,
           level: orphanLevel,
         });
         levelCounts.set(orphanLevel, orphanCount + 1);
@@ -217,7 +238,7 @@ export const VisualEditor = ({
       const hasShop = !!page.shop;
       const isStart = index === 0 || page.id === 1;
       const pageIdStr = String(page.id);
-      const pos = positions.get(pageIdStr) || { x: 0, y: index * 220, level: 0 };
+      const pos = positions.get(pageIdStr) || { x: 0, y: index * 250, level: 0 };
       
       nodes.push({
         id: String(page.id),
@@ -247,9 +268,9 @@ export const VisualEditor = ({
             id: edgeId,
             source: String(page.id),
             target: String(targetId),
-            label: choice.text?.substring(0, 20) + (choice.text && choice.text.length > 20 ? '...' : ''),
+            label: choice.text?.replace(/<[^>]+>/g, '').substring(0, 20) + (choice.text && choice.text.replace(/<[^>]+>/g, '').length > 20 ? '...' : ''),
             animated: isCombatEdge,
-            type: 'smoothstep',
+            type: 'default', // Changed from smoothstep for better routing
             markerEnd: {
               type: MarkerType.ArrowClosed,
               color: isCombatEdge ? '#ef4444' : '#3b82f6',
@@ -267,6 +288,9 @@ export const VisualEditor = ({
               fill: '#fff', 
               fillOpacity: 0.8,
             },
+            // Add offset for multiple edges between same nodes
+            sourceHandle: null,
+            targetHandle: null,
           });
         }
 
@@ -279,7 +303,7 @@ export const VisualEditor = ({
               target: String(choice.combat.winPageId),
               label: '✓ Victory',
               animated: true,
-              type: 'smoothstep',
+              type: 'default',
               markerEnd: {
                 type: MarkerType.ArrowClosed,
                 color: '#22c55e',
@@ -307,7 +331,7 @@ export const VisualEditor = ({
               target: String(choice.combat.losePageId),
               label: '✗ Defeat',
               animated: true,
-              type: 'smoothstep',
+              type: 'default',
               markerEnd: {
                 type: MarkerType.ArrowClosed,
                 color: '#ef4444',

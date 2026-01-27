@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle, Hammer } from 'lucide-react';
+import { Upload, FileJson, Download, AlertCircle, AlertTriangle, CheckCircle, Hammer, Code2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GamebookData, ValidationError } from '@/types/gamebook';
 import { validateGamebookStructure, validateGamebook } from '@/lib/gamebook-validator';
 import { useNavigate } from 'react-router-dom';
@@ -241,91 +242,107 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         </Button>
       </div>
       
-      <div className="w-full max-w-2xl space-y-6">
+      <div className="w-full max-w-6xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-serif font-bold text-foreground">Interactive Gamebook</h1>
           <p className="text-muted-foreground text-lg">Upload your story and begin your adventure</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileJson className="h-5 w-5" />
-              Load Your Story
-            </CardTitle>
-            <CardDescription>
-              Upload a JSON file containing your gamebook pages and choices
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                isDragging 
-                  ? 'border-primary bg-primary/5' 
-                  : 'border-muted-foreground/25 hover:border-primary/50'
-              }`}
-            >
-              <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-foreground font-medium mb-2">Drag & drop your JSON file here</p>
-              <p className="text-muted-foreground text-sm mb-4">or</p>
-              <label>
-                <input
-                  type="file"
-                  accept=".json,application/json"
-                  onChange={handleFileInput}
-                  className="hidden"
-                />
-                <Button variant="outline" asChild>
-                  <span className="cursor-pointer">Browse Files</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Load Story Card */}
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileJson className="h-5 w-5" />
+                Load Your Story
+              </CardTitle>
+              <CardDescription>
+                Upload a JSON file containing your gamebook pages and choices
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  isDragging 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-muted-foreground/25 hover:border-primary/50'
+                }`}
+              >
+                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-foreground font-medium mb-2">Drag & drop your JSON file here</p>
+                <p className="text-muted-foreground text-sm mb-4">or</p>
+                <label>
+                  <input
+                    type="file"
+                    accept=".json,application/json"
+                    onChange={handleFileInput}
+                    className="hidden"
+                  />
+                  <Button variant="outline" asChild>
+                    <span className="cursor-pointer">Browse Files</span>
+                  </Button>
+                </label>
+              </div>
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {warnings.length > 0 && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <p className="font-medium mb-1">Warnings (story will still load):</p>
+                    <ul className="text-sm list-disc list-inside">
+                      {warnings.slice(0, 5).map((w, i) => (
+                        <li key={i}>{w.message}</li>
+                      ))}
+                      {warnings.length > 5 && <li>...and {warnings.length - 5} more</li>}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={downloadTemplate} className="flex-1">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Template
                 </Button>
-              </label>
-            </div>
+                <Button variant="default" onClick={loadSampleStory} className="flex-1">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Try Sample Story
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {warnings.length > 0 && (
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  <p className="font-medium mb-1">Warnings (story will still load):</p>
-                  <ul className="text-sm list-disc list-inside">
-                    {warnings.slice(0, 5).map((w, i) => (
-                      <li key={i}>{w.message}</li>
-                    ))}
-                    {warnings.length > 5 && <li>...and {warnings.length - 5} more</li>}
-                  </ul>
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={downloadTemplate} className="flex-1">
-                <Download className="h-4 w-4 mr-2" />
-                Download Template
-              </Button>
-              <Button variant="default" onClick={loadSampleStory} className="flex-1">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Try Sample Story
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>JSON Format (Spec v1)</CardTitle>
-            <CardDescription>Author-defined stats and simple structure</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto">
+          {/* JSON Format & Preview Card */}
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>JSON Format & Preview</CardTitle>
+              <CardDescription>View the structure or see what it looks like</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="json" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="json" className="gap-2">
+                    <Code2 className="h-4 w-4" />
+                    JSON
+                  </TabsTrigger>
+                  <TabsTrigger value="preview" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    Preview
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="json" className="space-y-3 mt-4">
+                  <pre className="bg-muted p-4 rounded-lg text-xs overflow-x-auto max-h-[400px]">
 {`{
   "meta": { "title": "...", "author": "...", "version": "1.0" },
   "player": {
@@ -344,13 +361,42 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
     }]
   }]
 }`}
-            </pre>
-            <p className="text-xs text-muted-foreground">
-              Stats are author-defined numeric values. Effects apply raw deltas. 
-              Text supports **bold**, _italic_, and line breaks.
-            </p>
-          </CardContent>
-        </Card>
+                  </pre>
+                  <p className="text-xs text-muted-foreground">
+                    Stats are author-defined numeric values. Effects apply raw deltas. 
+                    Text supports **bold**, _italic_, and line breaks.
+                  </p>
+                </TabsContent>
+                
+                <TabsContent value="preview" className="space-y-4 mt-4">
+                  <div className="bg-muted/50 p-6 rounded-lg space-y-4 border border-border">
+                    <div className="bg-background p-4 rounded-lg">
+                      <p className="text-sm leading-relaxed">
+                        You stand at the entrance of a <strong>mysterious cave</strong>. The darkness within beckons you forward, while the safety of the sunlit forest lies behind.
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Button variant="default" className="w-full justify-start">
+                        Enter the cave
+                      </Button>
+                      <Button variant="outline" className="w-full justify-start opacity-50 cursor-not-allowed">
+                        <span>Unlock the gate</span>
+                        <span className="ml-auto text-xs text-muted-foreground">Requires: Ancient Key</span>
+                      </Button>
+                    </div>
+                    
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-xs text-muted-foreground text-center">
+                        This is how your story will appear to readers
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
