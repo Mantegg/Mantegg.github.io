@@ -36,6 +36,12 @@ jobs:
       - name: Build
         run: npm run build
       
+      - name: Add .nojekyll
+        run: touch dist/.nojekyll
+      
+      - name: List dist contents
+        run: ls -la dist && ls -la dist/assets
+      
       - name: Setup Pages
         uses: actions/configure-pages@v4
       
