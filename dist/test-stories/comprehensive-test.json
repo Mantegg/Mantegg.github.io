@@ -1,0 +1,704 @@
+{
+  "meta": {
+    "title": "Comprehensive Feature Test Adventure",
+    "author": "Test Suite",
+    "version": "1.0",
+    "storyId": "550e8400-e29b-41d4-a716-446655440000"
+  },
+
+  "theme": {
+    "defaultMode": "dark",
+    "backgroundGradient": "from-purple-900 via-blue-900 to-indigo-900"
+  },
+
+  "player": {
+    "stats": {
+      "Health": 20,
+      "Stamina": 15,
+      "Intelligence": 10,
+      "Luck": 8
+    },
+    "variables": {
+      "knows_password": false,
+      "met_wizard": false,
+      "gold_coins": 0,
+      "reputation": "neutral"
+    },
+    "startingItems": ["rusty_sword", "healing_potion"]
+  },
+
+  "items": [
+    { "id": "rusty_sword", "name": "Rusty Sword", "visible": true, "type": "key" },
+    { "id": "healing_potion", "name": "Healing Potion", "visible": true, "type": "consumable" },
+    { "id": "magic_staff", "name": "Magic Staff", "visible": true, "type": "key" },
+    { "id": "ancient_map", "name": "Ancient Map", "visible": true, "type": "clue" },
+    { "id": "silver_key", "name": "Silver Key", "visible": true, "type": "key" },
+    { "id": "mysterious_amulet", "name": "Mysterious Amulet", "visible": true, "type": "token" },
+    { "id": "secret_token", "name": "Secret Token", "visible": false, "type": "flag" }
+  ],
+
+  "sections": [
+    { "id": 0, "name": "Introduction" },
+    { "id": 1, "name": "The Village" },
+    { "id": 2, "name": "Forest Path" },
+    { "id": 3, "name": "Ancient Temple" },
+    { "id": 4, "name": "Endings" }
+  ],
+
+  "pages": [
+    {
+      "id": 1,
+      "section": 0,
+      "title": "The Beginning",
+      "bookmark": "start",
+      "text": "Welcome, **brave adventurer**, to the _Comprehensive Feature Test_!\n\nYou awaken in a small village inn. Through the window, you can see the morning sun rising over distant mountains. Your journey begins here.\n\n**Current Stats:**\n- Health: Check your stats panel!\n- Starting Items: Check your inventory!\n\nThis adventure will test all features of the gamebook engine.",
+      "choices": [
+        {
+          "text": "Start the adventure",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "section": 1,
+      "title": "Village Square",
+      "text": "You stand in the bustling village square. Merchants call out their wares, children play near the fountain, and the smell of fresh bread fills the air.\n\nYou notice:\n- A **mysterious wizard** standing by the well\n- A **merchant** selling goods\n- A path leading to the **forest**",
+      "choices": [
+        {
+          "text": "Talk to the wizard",
+          "to": 3
+        },
+        {
+          "text": "Visit the merchant",
+          "to": 4
+        },
+        {
+          "text": "Head to the forest",
+          "to": 10
+        },
+        {
+          "text": "Rest at the inn (restore health)",
+          "effects": {
+            "stats": {
+              "Health": 5,
+              "Stamina": 3
+            }
+          },
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "section": 1,
+      "title": "The Wizard",
+      "text": "The wizard looks at you with ancient, knowing eyes. His long beard sparkles with what seems to be stardust.\n\n\"Greetings, traveler,\" he says in a deep voice. \"I sense great potential in you. Here, take this magical staff. You'll need it for the trials ahead.\"\n\nThe wizard also whispers a secret password to you: _\"Luminos\"_",
+      "effects": {
+        "itemsAdd": ["magic_staff"],
+        "variables": {
+          "met_wizard": true,
+          "knows_password": true
+        }
+      },
+      "choices": [
+        {
+          "text": "Thank the wizard and return to the square",
+          "to": 2
+        },
+        {
+          "text": "Ask about the ancient temple",
+          "to": 5
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "section": 1,
+      "title": "The Merchant",
+      "text": "The merchant grins widely. \"Looking for supplies, eh? I've got just what you need!\"\n\n**Available Items:**\n- Ancient Map (improves navigation)\n- Healing Potion (restores health)\n- Mysterious Amulet (unknown properties)",
+      "choices": [
+        {
+          "text": "Buy the Ancient Map (requires: Rusty Sword to trade)",
+          "conditions": {
+            "items": ["rusty_sword"]
+          },
+          "effects": {
+            "itemsAdd": ["ancient_map"],
+            "itemsRemove": ["rusty_sword"]
+          },
+          "to": 2,
+          "note": "Trading system test"
+        },
+        {
+          "text": "Buy the Ancient Map (requires: Rusty Sword to trade)",
+          "to": 6
+        },
+        {
+          "text": "Just browse and leave",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "section": 1,
+      "title": "Wizard's Warning",
+      "text": "The wizard's expression becomes grave. \"The Ancient Temple lies deep in the forest. Many have entered, few have returned.\n\nYou'll need both **wisdom** and **courage** to survive its trials. The password I gave you will be essential.\"\n\n_Intelligence increased by 2 from the wizard's teachings!_",
+      "effects": {
+        "stats": {
+          "Intelligence": 2
+        },
+        "variables": {
+          "gold_coins": 10
+        }
+      },
+      "choices": [
+        {
+          "text": "I'm ready for the challenge",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "section": 1,
+      "title": "Insufficient Funds",
+      "text": "The merchant shakes his head. \"Sorry, friend. No sword, no map. That's the deal.\"\n\nYou'll need to find another way to get what you need.",
+      "choices": [
+        {
+          "text": "Return to the square",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "section": 2,
+      "title": "Forest Entrance",
+      "bookmark": "forest",
+      "text": "You enter the **Darkwood Forest**. Ancient trees tower above you, their branches creating a canopy that blocks most of the sunlight.\n\nThe path splits in three directions:\n- Left: A well-worn path\n- Center: Dense vegetation\n- Right: Strange markings on the trees",
+      "choices": [
+        {
+          "text": "Take the left path",
+          "to": 11
+        },
+        {
+          "text": "Push through the center",
+          "requires": {
+            "stats": {
+              "Stamina": {
+                "gte": 10
+              }
+            }
+          },
+          "effects": {
+            "stats": {
+              "Stamina": -3
+            }
+          },
+          "to": 12
+        },
+        {
+          "text": "Push through the center",
+          "to": 13
+        },
+        {
+          "text": "Follow the markings right (requires: Ancient Map)",
+          "conditions": {
+            "items": ["ancient_map"]
+          },
+          "to": 14
+        },
+        {
+          "text": "Follow the markings right (requires: Ancient Map)",
+          "to": 13
+        },
+        {
+          "text": "Return to the village",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "section": 2,
+      "title": "Peaceful Path",
+      "text": "The well-worn path leads you through a beautiful glade. Sunlight filters through the leaves, and you hear birds singing.\n\nYou find a **Mysterious Amulet** hanging from a low branch, as if waiting for you.",
+      "effects": {
+        "itemsAdd": ["mysterious_amulet"]
+      },
+      "choices": [
+        {
+          "text": "Continue deeper into the forest",
+          "to": 15
+        },
+        {
+          "text": "Return to the forest entrance",
+          "to": 10
+        }
+      ]
+    },
+
+    {
+      "id": 12,
+      "section": 2,
+      "title": "Through the Thicket",
+      "text": "You push through the dense vegetation. Thorns scratch your arms and vines try to hold you back, but your stamina carries you through.\n\nOn the other side, you discover a **hidden shortcut** directly to the temple!",
+      "effects": {
+        "variables": {
+          "found_shortcut": true
+        }
+      },
+      "choices": [
+        {
+          "text": "Take the shortcut to the temple",
+          "to": 20
+        },
+        {
+          "text": "Go back and explore more",
+          "to": 10
+        }
+      ]
+    },
+
+    {
+      "id": 13,
+      "section": 2,
+      "title": "Lost in the Woods",
+      "text": "Without the proper tools or strength, you become disoriented. The forest seems to twist around you.\n\nYou eventually find your way back to the entrance, but you're exhausted.\n\n_-2 Stamina from exhaustion_",
+      "effects": {
+        "stats": {
+          "Stamina": -2
+        }
+      },
+      "choices": [
+        {
+          "text": "Try again",
+          "to": 10
+        },
+        {
+          "text": "Return to the village to rest",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 14,
+      "section": 2,
+      "title": "Ancient Markings",
+      "text": "Using your Ancient Map, you decipher the markings on the trees. They form an ancient language that tells the story of a great civilization.\n\nThe markings lead you to a hidden cache containing a **Silver Key**!\n\n_+2 Intelligence from learning ancient knowledge_",
+      "effects": {
+        "itemsAdd": ["silver_key"],
+        "stats": {
+          "Intelligence": 2
+        },
+        "variables": {
+          "secret_token": true
+        }
+      },
+      "choices": [
+        {
+          "text": "Continue to the temple",
+          "to": 15
+        }
+      ]
+    },
+
+    {
+      "id": 15,
+      "section": 2,
+      "title": "Temple Approach",
+      "text": "Through the trees, you see the **Ancient Temple** rising before you. Stone pillars covered in moss reach toward the sky, and mysterious symbols glow faintly on the walls.\n\nA sense of ancient power emanates from within.",
+      "choices": [
+        {
+          "text": "Enter the temple",
+          "to": 20
+        },
+        {
+          "text": "Study the exterior first (requires: Intelligence 12+)",
+          "requires": {
+            "stats": {
+              "Intelligence": {
+                "gte": 12
+              }
+            }
+          },
+          "to": 16
+        },
+        {
+          "text": "Study the exterior first (requires: Intelligence 12+)",
+          "to": 17
+        }
+      ]
+    },
+
+    {
+      "id": 16,
+      "section": 2,
+      "title": "Scholar's Discovery",
+      "text": "Your keen intelligence allows you to understand the temple's exterior writings. You learn the secrets of its construction and discover a **hidden entrance** that bypasses the first trial!\n\n_+1 Luck from your discovery_",
+      "effects": {
+        "stats": {
+          "Luck": 1
+        },
+        "variables": {
+          "found_secret_entrance": true
+        }
+      },
+      "choices": [
+        {
+          "text": "Use the secret entrance",
+          "to": 22
+        },
+        {
+          "text": "Enter through the main entrance anyway",
+          "to": 20
+        }
+      ]
+    },
+
+    {
+      "id": 17,
+      "section": 2,
+      "title": "Insufficient Knowledge",
+      "text": "The symbols are too complex for your current level of understanding. You'll need to study more or find another way.",
+      "choices": [
+        {
+          "text": "Enter through the main entrance",
+          "to": 20
+        }
+      ]
+    },
+
+    {
+      "id": 20,
+      "section": 3,
+      "title": "Temple Entrance Hall",
+      "bookmark": "temple",
+      "text": "You step into the temple's grand entrance hall. Torches flicker on the walls, casting dancing shadows. The air is thick with ancient magic.\n\nBefore you stands a **massive stone door** with an inscription:\n\n_\"Speak the word of light to pass, or prove your worth through trial and task.\"_",
+      "choices": [
+        {
+          "text": "Speak the password (requires: knowledge from wizard)",
+          "conditions": {
+            "variables": {
+              "knows_password": true
+            }
+          },
+          "to": 22
+        },
+        {
+          "text": "Try to speak a password",
+          "input": {
+            "type": "string",
+            "prompt": "What password do you speak?",
+            "answer": "Luminos"
+          },
+          "to": 22,
+          "failurePageId": 21
+        },
+        {
+          "text": "Attempt to force the door (requires: Health 15+)",
+          "requires": {
+            "stats": {
+              "Health": {
+                "gte": 15
+              }
+            }
+          },
+          "effects": {
+            "stats": {
+              "Health": -5,
+              "Stamina": -5
+            }
+          },
+          "to": 22
+        },
+        {
+          "text": "Search for another way",
+          "to": 25
+        }
+      ]
+    },
+
+    {
+      "id": 21,
+      "section": 3,
+      "title": "Wrong Password",
+      "text": "As you speak the wrong word, the door pulses with energy and a shockwave throws you backward!\n\n_The magical backlash damages you!_\n\n-3 Health, -2 Stamina",
+      "effects": {
+        "stats": {
+          "Health": -3,
+          "Stamina": -2
+        }
+      },
+      "choices": [
+        {
+          "text": "Try again",
+          "to": 20
+        },
+        {
+          "text": "Look for another entrance",
+          "to": 25
+        }
+      ]
+    },
+
+    {
+      "id": 22,
+      "section": 3,
+      "title": "Inner Sanctum",
+      "text": "You pass through the door and enter the **Inner Sanctum**. The room is filled with an ethereal glow. In the center, on a pedestal, rests a magnificent **Crystal Orb** pulsing with power.\n\nHowever, the orb is protected by a magical barrier. To claim it, you must solve a riddle:\n\n_\"I am taken from a mine, and shut up in a wooden case, from which I am never released, and yet I am used by almost every person. What am I?\"_",
+      "choices": [
+        {
+          "text": "Answer the riddle",
+          "input": {
+            "type": "string",
+            "prompt": "What is the answer?",
+            "answer": "pencil"
+          },
+          "effects": {
+            "variables": {
+              "solved_riddle": true
+            }
+          },
+          "to": 30,
+          "failurePageId": 23
+        },
+        {
+          "text": "Use the Magic Staff (if you have it)",
+          "conditions": {
+            "items": ["magic_staff"]
+          },
+          "effects": {
+            "variables": {
+              "used_magic_staff": true
+            }
+          },
+          "to": 24
+        },
+        {
+          "text": "Leave the temple with your discoveries",
+          "to": 35
+        }
+      ]
+    },
+
+    {
+      "id": 23,
+      "section": 3,
+      "title": "Incorrect Answer",
+      "text": "The magical barrier flares angrily. That wasn't the right answer.\n\nYou feel your energy draining...\n\n_-2 Intelligence, -2 Luck_",
+      "effects": {
+        "stats": {
+          "Intelligence": -2,
+          "Luck": -2
+        }
+      },
+      "choices": [
+        {
+          "text": "Try again",
+          "to": 22
+        },
+        {
+          "text": "Give up and leave",
+          "to": 35
+        }
+      ]
+    },
+
+    {
+      "id": 24,
+      "section": 3,
+      "title": "Power of the Staff",
+      "text": "You raise the Magic Staff, and it resonates with the barrier! The wizard's gift was more powerful than you imagined.\n\nThe barrier dissolves, allowing you to claim the Crystal Orb through magical means rather than wit.\n\n_Alternative solution found!_",
+      "choices": [
+        {
+          "text": "Claim the orb",
+          "to": 30
+        }
+      ]
+    },
+
+    {
+      "id": 25,
+      "section": 3,
+      "title": "Side Passage",
+      "text": "You discover a narrow side passage. It's dark and treacherous, but might lead somewhere useful.\n\nAs you navigate carefully, you find an ancient chest containing a healing elixir!\n\n_+10 Health, +5 Stamina_",
+      "effects": {
+        "stats": {
+          "Health": 10,
+          "Stamina": 5
+        }
+      },
+      "choices": [
+        {
+          "text": "Return to the main hall",
+          "to": 20
+        },
+        {
+          "text": "Continue through the passage",
+          "to": 22
+        }
+      ]
+    },
+
+    {
+      "id": 30,
+      "section": 3,
+      "title": "The Crystal Orb",
+      "text": "You reach out and grasp the **Crystal Orb**. As your fingers close around it, visions flood your mind—images of past, present, and future intertwine.\n\nThe orb's power flows into you, enhancing all your abilities!\n\n_All stats increased! You have achieved mastery!_",
+      "effects": {
+        "stats": {
+          "Health": 10,
+          "Stamina": 10,
+          "Intelligence": 5,
+          "Luck": 5
+        },
+        "variables": {
+          "has_orb": true,
+          "reputation": "legendary"
+        }
+      },
+      "choices": [
+        {
+          "text": "What will you do now?",
+          "to": 31
+        }
+      ]
+    },
+
+    {
+      "id": 31,
+      "section": 3,
+      "title": "Moment of Choice",
+      "text": "With the Crystal Orb in your possession, you face a crucial decision:\n\n**Option 1:** Return the orb to the village wizard, who will use it to protect the realm.\n\n**Option 2:** Keep the orb and become the most powerful being in the land.\n\n**Option 3:** Destroy the orb, preventing anyone from misusing its power.",
+      "choices": [
+        {
+          "text": "Return the orb to the wizard",
+          "to": 40
+        },
+        {
+          "text": "Keep the orb for yourself",
+          "to": 41
+        },
+        {
+          "text": "Destroy the orb",
+          "to": 42
+        },
+        {
+          "text": "Calculate: What is 15 + 27?",
+          "input": {
+            "type": "number",
+            "prompt": "Enter the sum of 15 + 27",
+            "answer": 42
+          },
+          "to": 43,
+          "failurePageId": 44,
+          "note": "Mathematical puzzle test"
+        }
+      ]
+    },
+
+    {
+      "id": 35,
+      "section": 4,
+      "title": "Honorable Retreat",
+      "text": "You decide that the temple's secrets are too dangerous. Sometimes wisdom lies in knowing when to walk away.\n\nYou return to the village with your discoveries and share your knowledge with others. While you didn't claim the ultimate prize, you've grown wiser and more experienced.\n\n**You have earned: The Wise Explorer ending**\n\n_This is a soft ending—you may restart to try different choices._",
+      "ending": {
+        "type": "soft"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 40,
+      "section": 4,
+      "title": "Guardian of the Realm",
+      "text": "You return to the village and present the Crystal Orb to the wizard. His eyes light up with gratitude.\n\n\"You have proven yourself to be truly noble,\" he says. \"This orb will protect our realm for generations to come. You shall be remembered as a great hero!\"\n\nThe village celebrates your success, and songs are sung of your adventures.\n\n**LEGENDARY ENDING ACHIEVED: The Noble Guardian**\n\n_Final Stats:_ Check your stats panel!\n_Items Collected:_ Check your inventory!\n\n**This is a HARD ENDING—Your adventure is complete!**",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 41,
+      "section": 4,
+      "title": "The Power Corrupts",
+      "text": "You decide to keep the orb for yourself. Its power is intoxicating, and you feel invincible.\n\nAt first, you use it for good. But slowly, inevitably, the orb's power corrupts you. You become a tyrant, feared rather than loved.\n\nYears later, a new hero will rise to stop you...\n\n**DARK ENDING ACHIEVED: The Fallen Hero**\n\n_Sometimes, the greatest strength is knowing when to let go._\n\n**This is a HARD ENDING—Your adventure is complete!**",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 42,
+      "section": 4,
+      "title": "Sacrifice for Peace",
+      "text": "You raise the Crystal Orb high and channel all your will into destroying it. The orb resists, but your determination is stronger.\n\nWith a blinding flash, the orb shatters into a thousand pieces of light that drift away like fireflies.\n\nThe temple begins to crumble around you, but you escape safely. The orb's power is gone forever—no one can use it for good or evil.\n\nYou may have lost the ultimate power, but you've saved countless lives from potential corruption.\n\n**HEROIC ENDING ACHIEVED: The Selfless Champion**\n\n_True heroism is sacrifice for the greater good._\n\n**This is a HARD ENDING—Your adventure is complete!**",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    },
+
+    {
+      "id": 43,
+      "section": 4,
+      "title": "Mathematical Mastery",
+      "text": "Your mathematical prowess impresses even the ancient magic! The temple recognizes you as a **true scholar**.\n\nA hidden chamber opens, revealing additional treasures and a secret path to an even greater ending!\n\n_+5 to all stats for your brilliance!_",
+      "effects": {
+        "stats": {
+          "Health": 5,
+          "Stamina": 5,
+          "Intelligence": 5,
+          "Luck": 5
+        }
+      },
+      "choices": [
+        {
+          "text": "Return the orb (Enhanced path)",
+          "to": 40
+        },
+        {
+          "text": "Explore the secret chamber first",
+          "to": 45
+        }
+      ]
+    },
+
+    {
+      "id": 44,
+      "section": 3,
+      "title": "Mathematical Failure",
+      "text": "The answer is incorrect. Perhaps mathematics isn't your strong suit?\n\n_No penalties, but you missed a secret path..._",
+      "choices": [
+        {
+          "text": "Return to your decision",
+          "to": 31
+        }
+      ]
+    },
+
+    {
+      "id": 45,
+      "section": 4,
+      "title": "Ultimate Secret",
+      "text": "The secret chamber contains ancient texts that teach you the true purpose of the Crystal Orb. It was never meant to be possessed, returned, or destroyed—it was meant to be **understood**.\n\nYou learn to channel its power without holding it, becoming one with its magic. You transcend the limitations of mortal heroes.\n\n**TRANSCENDENT ENDING ACHIEVED: The Enlightened One**\n\n_You have found the secret ultimate ending! Only those who explore every option and solve all puzzles can achieve this._\n\n_Final Reputation:_ legendary\n_Total Secrets Found:_ All of them!\n\n**This is a HARD ENDING—You have truly mastered this adventure!**",
+      "ending": {
+        "type": "hard"
+      },
+      "choices": []
+    }
+  ]
+}
