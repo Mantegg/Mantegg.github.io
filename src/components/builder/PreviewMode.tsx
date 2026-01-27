@@ -81,7 +81,7 @@ export const PreviewMode = ({ gamebookData, selectedPageId }: PreviewModeProps) 
     const page = gamebookData.pages?.find(p => p.id === pageId);
     if (!page) return `Page ${pageId}`;
     const title = page.title ? `${page.title} - ` : '';
-    const text = page.text ? page.text.substring(0, 50).replace(/\n/g, ' ') : '';
+    const text = page.text ? page.text.replace(/<[^>]+>/g, '').substring(0, 50).replace(/\n/g, ' ') : '';
     const preview = text.length > 50 ? text + '...' : text;
     return `Page ${pageId}${title ? ` - ${title}` : ''}${preview ? `: ${preview}` : ''}`;
   };

@@ -12,6 +12,7 @@ import { DicePopup } from './DicePopup';
 import { ThemeControls } from './ThemeControls';
 import { CombatPopup } from './CombatPopup';
 import { ShopPanel } from './ShopPanel';
+import { TextInputDialog } from './TextInputDialog';
 import { useTheme, useApplyThemeConfig } from '@/contexts/ThemeContext';
 import { formatText } from '@/lib/text-formatter';
 
@@ -34,10 +35,12 @@ interface StoryReaderProps {
   canSave: () => boolean;
   onUpdateStat?: (statName: string, value: number) => void;
   onConsumeItem?: (itemId: string) => void;
+  onUpdateVariable?: (variableName: string, value: any) => void;
   onPurchaseItem?: (pageId: number | string, itemId: string, price: number, currencyVar: string) => boolean;
   getItemDetails?: (itemId: string) => ItemDef | undefined;
   getEnemyDetails?: (enemyId: string) => EnemyDef | undefined;
   onUpdateStats?: (stats: Record<string, number>) => void;
+  onExportSave?: (slot: SaveSlot) => string;
 }
 
 export function StoryReader({
@@ -59,10 +62,12 @@ export function StoryReader({
   canSave,
   onUpdateStat,
   onConsumeItem,
+  onUpdateVariable,
   onPurchaseItem,
   getItemDetails,
   getEnemyDetails,
   onUpdateStats,
+  onExportSave,
 }: StoryReaderProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inputDialogOpen, setInputDialogOpen] = useState(false);
@@ -70,6 +75,8 @@ export function StoryReader({
   const [combatDialogOpen, setCombatDialogOpen] = useState(false);
   const [pendingCombatChoice, setPendingCombatChoice] = useState<Choice | null>(null);
   const [currentEnemy, setCurrentEnemy] = useState<EnemyDef | null>(null);
+  const [textInputDialogOpen, setTextInputDialogOpen] = useState(false);
+  const [pendingTextInputChoice, setPendingTextInputChoice] = useState<Choice | null>(null);
 
   const { backgroundGradient } = useTheme();
   
@@ -89,6 +96,13 @@ export function StoryReader({
   const isHardEnding = endingType === 'hard';
 
   const handleChoiceClick = (choice: Choice) => {
+    // Handle text input prompt
+    if (choice.prompt) {
+      setPendingTextInputChoice(choice);
+      setTextInputDialogOpen(true);
+      return;
+    }
+
     // Handle combat choices
     if (choice.combat && getEnemyDetails) {
       const enemy = getEnemyDetails(choice.combat.enemyId);
@@ -109,6 +123,23 @@ export function StoryReader({
     }
   };
 
+  const handleTextInputSubmit = (value: string) => {
+    if (pendingTextInputChoice && pendingTextInputChoice.prompt && onUpdateVariable) {
+      // Update variable with the input value
+      const variableName = pendingTextInputChoice.prompt.variableName;
+      const parsedValue = pendingTextInputChoice.prompt.type === 'number' ? Number(value) : value;
+      
+      // Store the input value
+      onUpdateVariable(variableName, parsedValue);
+      
+      // Continue with the choice
+      makeChoice(pendingTextInputChoice);
+      
+      setPendingTextInputChoice(null);
+      setTextInputDialogOpen(false);
+    }
+  };
+
   const handleInputSubmit = (correct: boolean) => {
     if (pendingInputChoice) {
       makeChoice(pendingInputChoice, correct);
@@ -121,19 +152,14 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      // Apply win effects if any
-      if (pendingCombatChoice.combat.winEffects) {
-        makeChoice({
-          ...pendingCombatChoice,
-          effects: pendingCombatChoice.combat.winEffects,
-          to: String(pendingCombatChoice.combat.winPageId),
-        });
-      } else {
-        makeChoice({
-          ...pendingCombatChoice,
-          to: String(pendingCombatChoice.combat.winPageId),
-        });
-      }
+      const winPageId = pendingCombatChoice.combat.winPageId;
+      const winChoice: Choice = {
+        text: pendingCombatChoice.text,
+        ...(typeof winPageId === 'number' ? { nextPageId: winPageId } : { to: String(winPageId) }),
+        effects: pendingCombatChoice.combat.winEffects,
+      };
+      
+      makeChoice(winChoice);
       
       setCombatDialogOpen(false);
       setPendingCombatChoice(null);
@@ -145,19 +171,14 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      // Apply lose effects if any
-      if (pendingCombatChoice.combat.loseEffects) {
-        makeChoice({
-          ...pendingCombatChoice,
-          effects: pendingCombatChoice.combat.loseEffects,
-          to: String(pendingCombatChoice.combat.losePageId),
-        });
-      } else {
-        makeChoice({
-          ...pendingCombatChoice,
-          to: String(pendingCombatChoice.combat.losePageId),
-        });
-      }
+      const losePageId = pendingCombatChoice.combat.losePageId;
+      const loseChoice: Choice = {
+        text: pendingCombatChoice.text,
+        ...(typeof losePageId === 'number' ? { nextPageId: losePageId } : { to: String(losePageId) }),
+        effects: pendingCombatChoice.combat.loseEffects,
+      };
+      
+      makeChoice(loseChoice);
       
       setCombatDialogOpen(false);
       setPendingCombatChoice(null);
@@ -241,6 +262,7 @@ export function StoryReader({
                       }}
                       onDelete={deleteSave}
                       maxSlots={maxSaveSlots}
+                      onExportSave={onExportSave}
                     />
                   )}
                   <InventoryPanel 
@@ -291,7 +313,7 @@ export function StoryReader({
 
             {/* Page text with formatting support */}
             <div className="font-serif text-foreground leading-relaxed text-lg">
-              {formatText(currentPage.text)}
+              {formatText(currentPage.text, gameState.variables)}
             </div>
 
             {/* Choice notes (e.g., combat instructions) */}
@@ -381,6 +403,19 @@ export function StoryReader({
           }}
           input={pendingInputChoice.input}
           onSubmit={handleInputSubmit}
+        />
+      )}
+
+      {/* Text Input Dialog */}
+      {pendingTextInputChoice?.prompt && (
+        <TextInputDialog
+          isOpen={textInputDialogOpen}
+          prompt={pendingTextInputChoice.prompt}
+          onSubmit={handleTextInputSubmit}
+          onCancel={() => {
+            setTextInputDialogOpen(false);
+            setPendingTextInputChoice(null);
+          }}
         />
       )}
 

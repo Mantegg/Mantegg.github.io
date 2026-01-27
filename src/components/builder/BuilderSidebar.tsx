@@ -150,7 +150,7 @@ export const BuilderSidebar = ({
                     </div>
                     {page.text && (
                       <p className="text-xs text-muted-foreground truncate mt-0.5">
-                        {page.text.substring(0, 50)}...
+                        {page.text.replace(/<[^>]+>/g, '').substring(0, 50)}...
                       </p>
                     )}
                   </div>

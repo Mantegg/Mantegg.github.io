@@ -230,7 +230,7 @@
       "id": 2,
       "section": 1,
       "title": "Village Square",
-      "text": "<p>You stand in the bustling village square. The market is busy with activity.</p>\n\n<p><em>Try hovering your mouse over items in your inventory to see their descriptions!</em></p>\n\n<h3>Available Locations:</h3>\n<ul>\n<li><strong>General Store</strong> - Buy consumables</li>\n<li><strong>Armory</strong> - Buy equipment</li>\n<li><strong>Forest Path</strong> - Adventures await</li>\n<li><strong>Town Hall</strong> - Meet the locals</li>\n</ul>",
+      "text": "<p>You stand in the bustling village square. The market is busy with activity.</p>\n\n<p><em>Try hovering your mouse over items in your inventory to see their descriptions!</em></p>\n\n<h3>Available Locations:</h3>\n<ul>\n<li><strong>General Store</strong> - Buy consumables</li>\n<li><strong>Armory</strong> - Buy equipment</li>\n<li><strong>Forest Path</strong> - Adventures await</li>\n<li><strong>Town Hall</strong> - Meet the locals</li>\n<li><strong>The Wizard</strong> - A mysterious figure who may have questions</li>\n</ul>",
       "choices": [
         {
           "text": "Visit the General Store",
@@ -247,6 +247,10 @@
         {
           "text": "Go to Town Hall",
           "to": 5
+        },
+        {
+          "text": "Meet the Wizard",
+          "to": 6
         }
       ]
     },
@@ -323,6 +327,53 @@
         },
         {
           "text": "Maybe later",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 6,
+      "section": 1,
+      "title": "The Wizard's Tower",
+      "text": "<p>You approach a mysterious tower. Inside, an old wizard looks up from his spellbook.</p>\n\n<p><strong>\"Greetings, {playerName}! To prove you are worthy of my aid, answer this riddle:\"</strong></p>\n\n<blockquote><em>What has four legs in the morning, two legs in the afternoon, and three legs in the evening?</em></blockquote>\n\n<p><strong>Text Input Test:</strong> You'll be prompted to enter your answer!</p>",
+      "choices": [
+        {
+          "text": "Answer the riddle",
+          "prompt": {
+            "type": "text",
+            "variableName": "riddle_answer",
+            "question": "What is your answer to the riddle?",
+            "placeholder": "Type your answer here...",
+            "validation": {
+              "required": true,
+              "minLength": 2,
+              "maxLength": 50
+            }
+          },
+          "to": 7
+        },
+        {
+          "text": "Leave (too difficult)",
+          "to": 2
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "section": 1,
+      "title": "The Wizard's Response",
+      "text": "<p>The wizard strokes his beard thoughtfully.</p>\n\n<p><strong>\"You answered: '{riddle_answer}'\"</strong></p>\n\n<p><em>(The correct answer is 'man' or 'human', but the wizard accepts any answer with a smile.)</em></p>\n\n<p>\"Interesting perspective! Whether right or wrong, your courage to attempt the riddle is admirable. Here, take this gift.\"</p>\n\n<p><em>The wizard gives you a magical amulet!</em></p>",
+      "effects": {
+        "itemsAdd": ["magic_amulet"],
+        "variables": {
+          "wizard_met": true
+        }
+      },
+      "choices": [
+        {
+          "text": "Thank the wizard and return to the village",
           "to": 2
         }
       ]

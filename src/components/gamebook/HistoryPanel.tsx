@@ -22,7 +22,7 @@ export function HistoryPanel({ history, currentPageId, getPageById, onJumpToPage
           {history.map((pageId, index) => {
             const page = getPageById(pageId);
             const isCurrent = pageId === currentPageId;
-            const preview = page?.text.substring(0, 50) + '...' || 'Unknown page';
+            const preview = page?.text.replace(/<[^>]+>/g, '').substring(0, 50) + '...' || 'Unknown page';
             
             return (
               <Button

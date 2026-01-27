@@ -19,6 +19,19 @@ export interface Choice {
   note?: string; // Author note (e.g., "Resolve combat manually")
   // Combat system
   combat?: CombatChoice; // Trigger combat encounter
+  // Text input prompt system
+  prompt?: {
+    type: 'text' | 'number';
+    variableName: string; // Variable to store the input
+    question: string; // Question to ask the reader
+    placeholder?: string; // Placeholder text
+    validation?: {
+      required?: boolean;
+      minLength?: number;
+      maxLength?: number;
+      pattern?: string; // Regex pattern for validation
+    };
+  };
 }
 
 export interface CombatChoice {

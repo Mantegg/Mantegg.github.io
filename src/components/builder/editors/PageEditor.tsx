@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Copy, Save, Sword, ShoppingCart, Zap, Lock } from 'lucide-react';
+import { Plus, Trash2, Copy, Save, Sword, ShoppingCart, Zap, Lock, MessageSquare } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { RichTextEditor } from './RichTextEditor';
+import { Textarea } from '@/components/ui/textarea';
 
 // Helper component for editing choice effects
 const ChoiceEffectsEditor = ({ choice, items, onUpdate }: { choice: Choice; items: ItemDef[]; onUpdate: (effects: PageEffects | undefined) => void }) => {
@@ -304,7 +305,7 @@ export const PageEditor = ({
   // Helper function to get page preview text
   const getPagePreview = (p: Page) => {
     const title = p.title ? `${p.title} - ` : '';
-    const text = p.text ? p.text.substring(0, 60).replace(/\n/g, ' ') : '';
+    const text = p.text ? p.text.replace(/<[^>]+>/g, '').substring(0, 60).replace(/\n/g, ' ') : '';
     const preview = text.length > 60 ? text + '...' : text;
     return `Page ${p.id}${title ? ` - ${title}` : ''}${preview ? `: ${preview}` : ''}`;
   };
@@ -723,30 +724,244 @@ export const PageEditor = ({
                       <div className="space-y-4 p-4 border rounded-md bg-background">
                         {/* Effects Editor */}
                         <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Zap className="h-4 w-4" />
-                            Effects (when choice is selected)
-                          </Label>
-                          <ChoiceEffectsEditor
-                            choice={choice}
-                            items={items}
-                            onUpdate={(effects) => onUpdateChoice(pageId, index, { effects })}
-                          />
+                          <div className="flex items-center justify-between">
+                            <Label className="flex items-center gap-2">
+                              <Zap className="h-4 w-4" />
+                              Effects (when choice is selected)
+                            </Label>
+                            <Switch
+                              checked={!!choice.effects && (
+                                (choice.effects.stats && Object.keys(choice.effects.stats).length > 0) ||
+                                (choice.effects.itemsAdd && choice.effects.itemsAdd.length > 0) ||
+                                (choice.effects.itemsRemove && choice.effects.itemsRemove.length > 0) ||
+                                (choice.effects.variables && Object.keys(choice.effects.variables).length > 0)
+                              )}
+                              onCheckedChange={(checked) => {
+                                if (!checked) {
+                                  onUpdateChoice(pageId, index, { effects: undefined });
+                                } else {
+                                  onUpdateChoice(pageId, index, { effects: {} });
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          {choice.effects && (
+                            <div className="pl-6 pt-2 border-l-2 border-yellow-500">
+                              <ChoiceEffectsEditor
+                                choice={choice}
+                                items={items}
+                                onUpdate={(effects) => onUpdateChoice(pageId, index, { effects })}
+                              />
+                            </div>
+                          )}
                         </div>
 
                         <Separator />
 
                         {/* Conditions Editor */}
                         <div className="space-y-2">
-                          <Label className="flex items-center gap-2">
-                            <Lock className="h-4 w-4" />
-                            Conditions (requirements to show/enable)
-                          </Label>
-                          <ChoiceConditionsEditor
-                            choice={choice}
-                            items={items}
-                            onUpdate={(conditions) => onUpdateChoice(pageId, index, { conditions })}
-                          />
+                          <div className="flex items-center justify-between">
+                            <Label className="flex items-center gap-2">
+                              <Lock className="h-4 w-4" />
+                              Conditions (requirements to show/enable)
+                            </Label>
+                            <Switch
+                              checked={!!choice.conditions && (
+                                (choice.conditions.stats && Object.keys(choice.conditions.stats).length > 0) ||
+                                (choice.conditions.items && choice.conditions.items.length > 0) ||
+                                (choice.conditions.variables && Object.keys(choice.conditions.variables).length > 0)
+                              )}
+                              onCheckedChange={(checked) => {
+                                if (!checked) {
+                                  onUpdateChoice(pageId, index, { conditions: undefined });
+                                } else {
+                                  onUpdateChoice(pageId, index, { conditions: {} });
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          {choice.conditions && (
+                            <div className="pl-6 pt-2 border-l-2 border-red-500">
+                              <ChoiceConditionsEditor
+                                choice={choice}
+                                items={items}
+                                onUpdate={(conditions) => onUpdateChoice(pageId, index, { conditions })}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        <Separator />
+
+                        {/* Text Input Prompt */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              Text Input Prompt
+                            </Label>
+                            <Switch
+                              checked={!!choice.prompt}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  onUpdateChoice(pageId, index, {
+                                    prompt: {
+                                      type: 'text',
+                                      variableName: 'user_input',
+                                      question: 'Please enter your answer:',
+                                      validation: { required: true }
+                                    }
+                                  });
+                                } else {
+                                  onUpdateChoice(pageId, index, { prompt: undefined });
+                                }
+                              }}
+                            />
+                          </div>
+                          
+                          {choice.prompt && (
+                            <div className="pl-6 space-y-3 pt-2 border-l-2 border-blue-500">
+                              <p className="text-xs text-muted-foreground">
+                                Prompt the reader to enter text before this choice proceeds
+                              </p>
+
+                              <div className="space-y-2">
+                                <Label>Input Type</Label>
+                                <Select
+                                  value={choice.prompt.type || 'text'}
+                                  onValueChange={(value: 'text' | 'number') => onUpdateChoice(pageId, index, {
+                                    prompt: { ...choice.prompt!, type: value }
+                                  })}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="text">Text Input</SelectItem>
+                                    <SelectItem value="number">Number Input</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Variable Name <span className="text-destructive">*</span></Label>
+                                <Input
+                                  value={choice.prompt.variableName || ''}
+                                  onChange={(e) => onUpdateChoice(pageId, index, {
+                                    prompt: { ...choice.prompt!, variableName: e.target.value }
+                                  })}
+                                  placeholder="player_answer"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  The input will be stored in this variable. Use {`{variableName}`} in story text to display it.
+                                </p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Question/Prompt <span className="text-destructive">*</span></Label>
+                                <Textarea
+                                  value={choice.prompt.question || ''}
+                                  onChange={(e) => onUpdateChoice(pageId, index, {
+                                    prompt: { ...choice.prompt!, question: e.target.value }
+                                  })}
+                                  placeholder="What is your answer?"
+                                  rows={2}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Placeholder (optional)</Label>
+                                <Input
+                                  value={choice.prompt.placeholder || ''}
+                                  onChange={(e) => onUpdateChoice(pageId, index, {
+                                    prompt: { ...choice.prompt!, placeholder: e.target.value }
+                                  })}
+                                  placeholder="Enter your answer here..."
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label>Validation Rules</Label>
+                                <div className="space-y-2 p-3 border rounded bg-muted/50">
+                                  <div className="flex items-center gap-2">
+                                    <Switch
+                                      checked={choice.prompt.validation?.required || false}
+                                      onCheckedChange={(checked) => onUpdateChoice(pageId, index, {
+                                        prompt: {
+                                          ...choice.prompt!,
+                                          validation: { ...choice.prompt!.validation, required: checked }
+                                        }
+                                      })}
+                                    />
+                                    <Label>Required (cannot be empty)</Label>
+                                  </div>
+
+                                  {choice.prompt.type === 'text' && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <Label className="text-xs">Min Length</Label>
+                                        <Input
+                                          type="number"
+                                          value={choice.prompt.validation?.minLength || ''}
+                                          onChange={(e) => onUpdateChoice(pageId, index, {
+                                            prompt: {
+                                              ...choice.prompt!,
+                                              validation: {
+                                                ...choice.prompt!.validation,
+                                                minLength: e.target.value ? parseInt(e.target.value) : undefined
+                                              }
+                                            }
+                                          })}
+                                          placeholder="1"
+                                          min="1"
+                                        />
+                                      </div>
+                                      <div>
+                                        <Label className="text-xs">Max Length</Label>
+                                        <Input
+                                          type="number"
+                                          value={choice.prompt.validation?.maxLength || ''}
+                                          onChange={(e) => onUpdateChoice(pageId, index, {
+                                            prompt: {
+                                              ...choice.prompt!,
+                                              validation: {
+                                                ...choice.prompt!.validation,
+                                                maxLength: e.target.value ? parseInt(e.target.value) : undefined
+                                              }
+                                            }
+                                          })}
+                                          placeholder="100"
+                                          min="1"
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  <div className="space-y-1">
+                                    <Label className="text-xs">Regex Pattern (advanced)</Label>
+                                    <Input
+                                      value={choice.prompt.validation?.pattern || ''}
+                                      onChange={(e) => onUpdateChoice(pageId, index, {
+                                        prompt: {
+                                          ...choice.prompt!,
+                                          validation: {
+                                            ...choice.prompt!.validation,
+                                            pattern: e.target.value || undefined
+                                          }
+                                        }
+                                      })}
+                                      placeholder="^[a-zA-Z]+$"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                      Optional: Regex to validate input format
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
