@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "title": "EGB v1 Full Stress Test",
+    "author": "Engine Breaker",
+    "version": "1.0",
+    "storyId": "550e8400-e29b-41d4-a716-446655440002"
+  },
+
+  "player": {
+    "statMode": "custom_only",
+    "startingItems": []
+  },
+
+  "sections": [
+    { "id": 0, "name": "Initialization" },
+    { "id": 1, "name": "Central Hub" },
+    { "id": 2, "name": "Attrition Trials" },
+    { "id": 3, "name": "Logic Gates" },
+    { "id": 4, "name": "End States" }
+  ],
+
+  "items": {
+    "hub_token": { "name": "Hub Token", "type": "key", "visible": true },
+    "red_mark": { "name": "Red Mark", "type": "flag", "visible": false },
+    "blue_mark": { "name": "Blue Mark", "type": "flag", "visible": false }
+  },
+
+  "pages": [
+    {
+      "id": 1,
+      "section": 0,
+      "text": "**SYSTEM START**\n\n_Enter your stats manually._\n\nThis page applies no effects.\n\nIf stats appear after navigation, state is persistent.",
+      "choices": [
+        { "text": "Continue", "nextPageId": 2 }
+      ]
+    },
+
+    {
+      "id": 2,
+      "section": 1,
+      "text": "**CENTRAL HUB**\n\nChoose a stress path.\n\n_You may return here repeatedly._",
+      "choices": [
+        {
+          "text": "Enter Attrition Trial",
+          "effects": {
+            "variables": { "visits": 1 }
+          },
+          "nextPageId": 3
+        },
+        {
+          "text": "Enter Logic Gate",
+          "nextPageId": 10
+        },
+        {
+          "text": "Mark yourself (item test)",
+          "effects": {
+            "itemsAdd": ["hub_token", "red_mark"]
+          },
+          "nextPageId": 2
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "section": 2,
+      "text": "**ATTRITION TRIAL**\n\n_Your body and mind are strained._\n\n(-1 Health, -1 Focus)",
+      "choices": [
+        {
+          "text": "Endure",
+          "effects": {
+            "stats": {
+              "Health": -1,
+              "Focus": -1
+            }
+          },
+          "nextPageId": 4
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "section": 2,
+      "text": "The trial continues.\n\n_This can reduce stats below zero._",
+      "choices": [
+        {
+          "text": "Continue suffering",
+          "effects": {
+            "stats": {
+              "Health": -2,
+              "Focus": -2
+            },
+            "variables": {
+              "pain_counter": 1
+            }
+          },
+          "nextPageId": 5
+        },
+        {
+          "text": "Escape to hub",
+          "nextPageId": 2
+        }
+      ]
+    },
+
+    {
+      "id": 5,
+      "section": 2,
+      "text": "**CHECK YOUR SHEET MANUALLY.**\n\nIf you should be dead, stop reading.\n\nOtherwise, continue.",
+      "choices": [
+        { "text": "I survive", "nextPageId": 2 },
+        { "text": "I am dead", "nextPageId": 20 }
+      ]
+    },
+
+    {
+      "id": 10,
+      "section": 3,
+      "text": "**LOGIC GATE**\n\nEnter the word _ENGINE_.",
+      "choices": [
+        {
+          "text": "Submit answer",
+          "input": {
+            "type": "text",
+            "prompt": "Enter word",
+            "answer": "ENGINE"
+          },
+          "effects": {
+            "variables": { "logic_pass": true },
+            "itemsAdd": ["blue_mark"],
+            "stats": { "Clarity": 1 }
+          },
+          "nextPageId": 11,
+          "failurePageId": 12
+        }
+      ]
+    },
+
+    {
+      "id": 11,
+      "section": 3,
+      "text": "**LOGIC ACCEPTED**\n\n(+1 Clarity)\n\nReturn to hub.",
+      "choices": [
+        { "text": "Return", "nextPageId": 2 }
+      ]
+    },
+
+    {
+      "id": 12,
+      "section": 3,
+      "text": "_Incorrect._\n\nYour confidence drops. (-1 Clarity)",
+      "choices": [
+        {
+          "text": "Try again",
+          "effects": {
+            "stats": { "Clarity": -1 }
+          },
+          "nextPageId": 10
+        }
+      ]
+    },
+
+    {
+      "id": 20,
+      "section": 4,
+      "text": "**FAILURE STATE**\n\n_You have died according to your own rules._",
+      "ending": { "type": "hard" },
+      "choices": []
+    },
+
+    {
+      "id": 21,
+      "section": 4,
+      "text": "**SUCCESS STATE**\n\nYou have tested every system.\n\nIf nothing broke, the engine is stable.",
+      "ending": { "type": "hard" },
+      "choices": []
+    }
+  ]
+}
