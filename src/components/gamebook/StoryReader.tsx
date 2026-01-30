@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Menu, RotateCcw, LogOut, Trophy, Skull } from 'lucide-react';
+import { Menu, RotateCcw, LogOut, Trophy, Skull, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { GamebookData, GameState, Page, Choice, SaveSlot, ItemDef, EnemyDef } from '@/types/gamebook';
 import { HistoryPanel } from './HistoryPanel';
 import { InventoryPanel } from './InventoryPanel';
@@ -77,6 +79,43 @@ export function StoryReader({
   const [currentEnemy, setCurrentEnemy] = useState<EnemyDef | null>(null);
   const [textInputDialogOpen, setTextInputDialogOpen] = useState(false);
   const [pendingTextInputChoice, setPendingTextInputChoice] = useState<Choice | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  // Generate live save code
+  const generateLiveSaveCode = () => {
+    try {
+      if (!onExportSave || !currentPage) return '';
+      
+      const tempSlot: SaveSlot = {
+        id: 0,
+        name: 'Current State',
+        savedAt: new Date().toISOString(),
+        currentPageId: gameState.currentPageId,
+        inventory: gameState.inventory,
+        stats: gameState.stats,
+        history: gameState.history,
+        variables: gameState.variables,
+        playerName: gameState.playerName,
+        visitedPages: Array.from(gameState.visitedPages),
+        storyId: gamebookData.meta?.storyId,
+        storyTitle: gamebookData.meta?.title || 'Untitled',
+        pagePreview: currentPage?.text?.slice(0, 50) || '',
+        state: gameState,
+      };
+      
+      return onExportSave(tempSlot);
+    } catch (error) {
+      console.error('Error generating save code:', error);
+      return '';
+    }
+  };
+
+  const copyLiveSaveCode = () => {
+    const code = generateLiveSaveCode();
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
 
   const { backgroundGradient } = useTheme();
   
@@ -152,11 +191,15 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      const winPageId = pendingCombatChoice.combat.winPageId;
+      // Use winPageId if specified, otherwise use nextPageId or to
+      const winPageId = pendingCombatChoice.combat.winPageId || pendingCombatChoice.nextPageId || pendingCombatChoice.to;
       const winChoice: Choice = {
         text: pendingCombatChoice.text,
         ...(typeof winPageId === 'number' ? { nextPageId: winPageId } : { to: String(winPageId) }),
-        effects: pendingCombatChoice.combat.winEffects,
+        effects: {
+          ...pendingCombatChoice.effects,
+          ...pendingCombatChoice.combat.winEffects
+        },
       };
       
       makeChoice(winChoice);
@@ -171,7 +214,8 @@ export function StoryReader({
     if (pendingCombatChoice && pendingCombatChoice.combat && onUpdateStats) {
       onUpdateStats(finalStats);
       
-      const losePageId = pendingCombatChoice.combat.losePageId;
+      // Use losePageId if specified, otherwise use failurePageId or stay on current page
+      const losePageId = pendingCombatChoice.combat.losePageId || pendingCombatChoice.failurePageId || gameState.currentPageId;
       const loseChoice: Choice = {
         text: pendingCombatChoice.text,
         ...(typeof losePageId === 'number' ? { nextPageId: losePageId } : { to: String(losePageId) }),
@@ -252,6 +296,41 @@ export function StoryReader({
               </SheetTrigger>
               <SheetContent className="w-80 overflow-y-auto">
                 <div className="space-y-6 pt-6">
+                  {/* Live Save Code Panel */}
+                  {onExportSave && currentPage && (
+                    <Card className="border-primary/50">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Copy className="h-4 w-4" />
+                          Current Save Code
+                        </CardTitle>
+                        <CardDescription className="text-xs">
+                          Copy to load on another device
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <div className="flex gap-2">
+                          <Input 
+                            value={generateLiveSaveCode()} 
+                            readOnly 
+                            className="font-mono text-xs h-9"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="icon"
+                            onClick={copyLiveSaveCode}
+                            className="h-9 w-9 flex-shrink-0"
+                          >
+                            {copiedCode ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          This code updates automatically as you progress
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                  
                   {canSave() && (
                     <SaveLoadPanel
                       saveSlots={getSaveSlots()}
@@ -289,9 +368,9 @@ export function StoryReader({
       </header>
 
       {/* Main content */}
-      <main className="container max-w-3xl mx-auto px-4 py-8">
-        <article className="prose prose-lg dark:prose-invert max-w-none">
-          <div className="bg-card/90 backdrop-blur rounded-lg p-6 md:p-8 shadow-sm border">
+      <main className="container max-w-3xl mx-auto px-2 sm:px-4 py-4 sm:py-8 min-h-[calc(100vh-3.5rem)] flex items-center justify-center">
+        <article className="prose prose-sm sm:prose-base md:prose-lg dark:prose-invert w-full sm:max-w-none max-w-[90%]">
+          <div className="bg-card/90 backdrop-blur rounded-lg p-4 sm:p-6 md:p-8 shadow-sm border max-h-[75vh] sm:max-h-none overflow-y-auto">
             {/* Player name greeting (if set) */}
             {gameState.playerName && gameState.history.length === 1 && (
               <p className="text-muted-foreground text-sm mb-4">
@@ -312,13 +391,13 @@ export function StoryReader({
             )}
 
             {/* Page text with formatting support */}
-            <div className="font-serif text-foreground leading-relaxed text-lg">
+            <div className="font-serif text-foreground leading-relaxed text-base sm:text-lg">
               {formatText(currentPage.text, gameState.variables)}
             </div>
 
             {/* Choice notes (e.g., combat instructions) */}
             {currentPage.choices.some(c => c.note) && (
-              <div className="mt-4 p-3 bg-muted/50 rounded text-sm text-muted-foreground italic">
+              <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-muted/50 rounded text-xs sm:text-sm text-muted-foreground italic">
                 {currentPage.choices.find(c => c.note)?.note}
               </div>
             )}
@@ -373,7 +452,11 @@ export function StoryReader({
                 <ShopPanel
                   shop={currentPage.shop}
                   currentPageId={currentPage.id}
-                  playerCurrency={(gameState.variables[currentPage.shop.currency] as number) || 0}
+                  playerCurrency={
+                    (gameState.stats[currentPage.shop.currency] as number) || 
+                    (gameState.variables[currentPage.shop.currency] as number) || 
+                    0
+                  }
                   playerInventory={gameState.inventory}
                   shopInventories={gameState.shopInventories}
                   getItemDetails={getItemDetails}
@@ -383,14 +466,6 @@ export function StoryReader({
             )}
           </div>
         </article>
-
-        {/* Quick status bar */}
-        <div className="mt-6 flex items-center justify-center gap-4 text-sm text-muted-foreground">
-          <span>Page {gameState.history.length} of your journey</span>
-          {gameState.inventory.length > 0 && (
-            <span>• {gameState.inventory.length} items</span>
-          )}
-        </div>
       </main>
 
       {/* Input Dialog for puzzles */}

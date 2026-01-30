@@ -219,7 +219,7 @@ export function SaveLoadStartScreen({ gamebookData, onStartNew, onLoadSave }: Sa
                     <Label htmlFor="share-code">Paste Share Code</Label>
                     <Input
                       id="share-code"
-                      placeholder="EGBK-XXXX-XXXX-XXXX"
+                      placeholder="EGBK:..."
                       value={importCode}
                       onChange={(e) => setImportCode(e.target.value)}
                     />
@@ -260,16 +260,15 @@ export function SaveLoadStartScreen({ gamebookData, onStartNew, onLoadSave }: Sa
 // Helper function to decode share codes
 function decodeShareCode(code: string): { storyId: string; saveData: any } {
   // Remove prefix and dashes
-  const cleaned = code.replace(/^EGBK[:-]?/i, '').replace(/-/g, '');
+  const cleaned = code.replace(/^EGBK[:-]?/i, '').replace(/-/g, '').trim();
   
   // Try direct JSON parse first (for file imports)
   if (code.startsWith('{')) {
     return JSON.parse(code);
   }
   
-  // Decompress from base64
-  const LZString = require('lz-string');
-  const decompressed = LZString.decompressFromBase64(cleaned);
+  // Decode from base64 with proper Unicode handling
+  const decompressed = decodeURIComponent(escape(atob(cleaned)));
   
   if (!decompressed) {
     throw new Error('Failed to decompress save data');

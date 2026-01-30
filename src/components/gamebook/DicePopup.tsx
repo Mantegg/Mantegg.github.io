@@ -170,10 +170,12 @@ export function DicePopup({ stats = {} }: DicePopupProps) {
                       : 'bg-red-500/20 text-red-700 dark:text-red-400'
                   )}
                 >
-                  {result.total} vs {result.statName} ({result.statValue})
-                  <span className="block text-xl mt-1">
-                    {result.success ? '✓ Success!' : '✗ Failure'}
-                  </span>
+                  <div className="text-2xl">
+                    (Dice) {result.total} {result.success ? '≤' : '>'} {result.statValue} ({result.statName})
+                  </div>
+                  <div className="text-sm mt-1 opacity-75">
+                    {result.success ? 'Success' : 'Failure'}
+                  </div>
                 </div>
               )}
 

@@ -730,8 +730,12 @@ export function useGamebook() {
     if (!gameState.inventory.includes(itemId)) return;
 
     setGameState(prev => {
-      // Remove item from inventory
-      const newInventory = prev.inventory.filter(id => id !== itemId);
+      // Remove only ONE instance of the item from inventory
+      const newInventory = [...prev.inventory];
+      const itemIndex = newInventory.indexOf(itemId);
+      if (itemIndex > -1) {
+        newInventory.splice(itemIndex, 1);
+      }
       
       // Apply item effects if any
       let updates: Partial<GameState> = { inventory: newInventory };
@@ -760,18 +764,32 @@ export function useGamebook() {
 
   // Purchase item from shop
   const purchaseItem = useCallback((pageId: number | string, itemId: string, price: number, currencyVar: string) => {
-    const currentCurrency = (gameState.variables[currencyVar] as number) || 0;
+    // Check if currency is a stat or variable
+    const isStatCurrency = gameState.stats[currencyVar] !== undefined;
+    const currentCurrency = isStatCurrency 
+      ? (gameState.stats[currencyVar] as number) || 0
+      : (gameState.variables[currencyVar] as number) || 0;
+      
     if (currentCurrency < price) return false; // Can't afford
-    if (gameState.inventory.includes(itemId)) return false; // Already have it
 
     const pageIdStr = String(pageId);
-    const shopStock = gameState.shopInventories[pageIdStr]?.[itemId];
+    
+    // Get shop stock - if not tracked yet, initialize from gamebook data
+    let shopStock = gameState.shopInventories[pageIdStr]?.[itemId];
+    if (shopStock === undefined && gamebookData) {
+      // Find the page's shop definition to get initial quantity
+      const page = normalizedPages.find(p => String(p.id) === pageIdStr);
+      if (page?.shop) {
+        const shopItem = page.shop.items.find(item => item.itemId === itemId);
+        if (shopItem) {
+          shopStock = shopItem.quantity; // Use initial quantity
+        }
+      }
+    }
+    
     if (shopStock !== undefined && shopStock <= 0) return false; // Out of stock
 
     setGameState(prev => {
-      const newVariables = { ...prev.variables };
-      newVariables[currencyVar] = currentCurrency - price;
-
       const newInventory = [...prev.inventory, itemId];
 
       const newShopInventories = { ...prev.shopInventories };
@@ -782,16 +800,30 @@ export function useGamebook() {
         newShopInventories[pageIdStr][itemId] = shopStock - 1;
       }
 
-      return {
-        ...prev,
-        variables: newVariables,
-        inventory: newInventory,
-        shopInventories: newShopInventories,
-      };
+      // Deduct currency from either stats or variables
+      if (isStatCurrency) {
+        const newStats = { ...prev.stats };
+        newStats[currencyVar] = currentCurrency - price;
+        return {
+          ...prev,
+          stats: newStats,
+          inventory: newInventory,
+          shopInventories: newShopInventories,
+        };
+      } else {
+        const newVariables = { ...prev.variables };
+        newVariables[currencyVar] = currentCurrency - price;
+        return {
+          ...prev,
+          variables: newVariables,
+          inventory: newInventory,
+          shopInventories: newShopInventories,
+        };
+      }
     });
 
     return true;
-  }, [gameState]);
+  }, [gameState, gamebookData, normalizedPages]);
 
   // Get item details
   const getItemDetails = useCallback((itemId: string) => {
@@ -815,8 +847,6 @@ export function useGamebook() {
 
   // Export save as share code (for QR/text sharing)
   const exportSaveAsCode = useCallback((saveData: GameState): string => {
-    const LZString = require('lz-string');
-    
     const exportData = {
       version: '1.0',
       timestamp: Date.now(),
@@ -825,19 +855,19 @@ export function useGamebook() {
     };
     
     const json = JSON.stringify(exportData);
-    const compressed = LZString.compressToBase64(json);
+    // Use base64 encoding with proper Unicode handling
+    const compressed = btoa(unescape(encodeURIComponent(json)));
     
-    // Format as share code with dashes for readability
-    const chunks = compressed.match(/.{1,4}/g) || [];
-    return 'EGBK-' + chunks.slice(0, 4).join('-');
+    // Return the full code with EGBK prefix
+    return 'EGBK:' + compressed;
   }, [gamebookData]);
 
   // Import save from code
   const importSaveFromCode = useCallback((code: string): GameState | null => {
     try {
-      const LZString = require('lz-string');
-      const cleaned = code.replace(/^EGBK[:-]?/i, '').replace(/-/g, '');
-      const decompressed = LZString.decompressFromBase64(cleaned);
+      const cleaned = code.replace(/^EGBK[:-]?/i, '').replace(/-/g, '').trim();
+      // Decode from base64 with proper Unicode handling
+      const decompressed = decodeURIComponent(escape(atob(cleaned)));
       
       if (!decompressed) return null;
       
@@ -858,7 +888,15 @@ export function useGamebook() {
 
   // Load game state directly (for imports)
   const loadGameState = useCallback((newState: GameState) => {
-    setGameState(newState);
+    // Ensure visitedPages is a Set and all required fields exist
+    const stateToLoad = {
+      ...newState,
+      visitedPages: new Set(Array.isArray(newState.visitedPages) ? newState.visitedPages : Array.from(newState.visitedPages || [])),
+      isCharacterSetupComplete: true, // Always mark as complete when loading a save
+      bookmarks: newState.bookmarks || {},
+      shopInventories: newState.shopInventories || {},
+    };
+    setGameState(stateToLoad);
     setIsPlaying(true);
   }, []);
 

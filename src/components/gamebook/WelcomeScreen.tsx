@@ -14,7 +14,7 @@ interface WelcomeScreenProps {
 
 const sampleTemplate: GamebookData = {
   meta: {
-    title: "Sample Adventure",
+    title: "The Dragon's Lair",
     author: "Demo Author",
     version: "1.0",
     storyId: "550e8400-e29b-41d4-a716-446655440999"
@@ -24,101 +24,199 @@ const sampleTemplate: GamebookData = {
       "health": {
         name: "Health",
         min: 1,
-        max: 20,
-        default: 10,
+        max: 30,
+        default: 20,
         description: "Your life force"
       },
-      "luck": {
-        name: "Luck",
+      "attack": {
+        name: "Attack",
         min: 1,
         max: 10,
         default: 5,
-        description: "Fortune favors the lucky"
+        description: "Your combat prowess"
+      },
+      "gold": {
+        name: "Gold",
+        min: 0,
+        max: 9999,
+        default: 50,
+        description: "Your currency"
       }
     },
     variables: {
       "has_key": false,
-      "solved_puzzle": false
+      "defeated_goblin": false,
+      "bought_sword": false
     }
   },
   player: {
     creationMode: "sliders",
     allowCustomName: true,
-    useStats: ["health", "luck"],
+    useStats: ["health", "attack", "gold"],
     startingItems: ["torch"],
     startingVariables: {
       "has_key": false,
-      "solved_puzzle": false
+      "defeated_goblin": false,
+      "bought_sword": false,
+      "gold": 50
     }
   },
   items: [
-    { id: "torch", name: "Torch", visible: true, type: "consumable" },
-    { id: "ancient_key", name: "Ancient Key", visible: true, type: "key" }
+    { id: "torch", name: "Torch", visible: true, type: "consumable", description: "Lights your way" },
+    { id: "health_potion", name: "Health Potion", visible: true, type: "consumable", description: "Restores 10 health", effects: { stats: { "health": 10 } } },
+    { id: "iron_sword", name: "Iron Sword", visible: true, type: "key", description: "A sturdy blade (+2 Attack)" },
+    { id: "ancient_key", name: "Ancient Key", visible: true, type: "key", description: "Opens the dragon's chamber" },
+    { id: "dragon_scale", name: "Dragon Scale", visible: true, type: "quest", description: "Proof of your victory" }
+  ],
+  enemies: [
+    {
+      id: "goblin",
+      name: "Cave Goblin",
+      health: 15,
+      attack: 3,
+      description: "A small but vicious creature"
+    },
+    {
+      id: "dragon",
+      name: "Ancient Dragon",
+      health: 40,
+      attack: 8,
+      description: "A fearsome beast guarding legendary treasure"
+    }
   ],
   sections: [
-    { id: 0, name: "Introduction" },
+    { id: 0, name: "Village" },
     { id: 1, name: "The Cave" },
-    { id: 2, name: "Endings" }
+    { id: 2, name: "Dragon's Lair" },
+    { id: 3, name: "Endings" }
   ],
   pages: [
     {
       id: 1,
       section: 0,
-      text: "You stand at the entrance of a mysterious cave. The darkness within beckons you forward, while the safety of the sunlit forest lies behind.",
+      title: "The Village Square",
+      text: "You arrive at a small village on the edge of a dangerous mountain. The villagers speak of a dragon's treasure deep within a cave, but also of the perils that guard it.\n\nA merchant's stall stands nearby, and the dark cave entrance looms in the distance.",
       choices: [
-        { text: "Enter the cave", nextPageId: 2 },
-        { text: "Return to the forest", nextPageId: 3 }
+        { text: "Visit the merchant", nextPageId: 2 },
+        { text: "Enter the cave", nextPageId: 3 }
       ]
     },
     {
       id: 2,
-      section: 1,
-      text: "Inside the cave, you discover a puzzle inscribed on the wall. What is 7 + 8?",
+      section: 0,
+      title: "The Merchant's Stall",
+      text: "The merchant greets you with a friendly smile. His wares are spread across a wooden table.",
+      shop: {
+        currency: "gold",
+        items: [
+          { itemId: "health_potion", price: 20, quantity: 3 },
+          { itemId: "iron_sword", price: 30, quantity: 1 }
+        ]
+      },
       choices: [
-        {
-          text: "Solve the puzzle",
-          input: { type: "number", prompt: "Enter your answer", answer: 15 },
-          effects: { variables: { "solved_puzzle": true }, itemsAdd: ["ancient_key"] },
-          nextPageId: 4,
-          failurePageId: 5
-        },
-        { text: "Leave the cave", nextPageId: 1 }
+        { text: "Return to village square", nextPageId: 1 },
+        { text: "Head to the cave", nextPageId: 3 }
       ]
     },
     {
       id: 3,
-      section: 2,
-      text: "You decide the cave is too dangerous. Perhaps another day.",
-      ending: { type: "soft" },
-      choices: []
+      section: 1,
+      title: "Cave Entrance",
+      text: "The cave mouth yawns before you, dark and foreboding. Your torch flickers in the cold draft from within.",
+      choices: [
+        { text: "Venture deeper", nextPageId: 4 },
+        { text: "Return to village", nextPageId: 1 }
+      ]
     },
     {
       id: 4,
       section: 1,
-      text: "The wall slides open, revealing a hidden chamber. You found an Ancient Key!",
+      title: "The Goblin's Chamber",
+      text: "A Cave Goblin blocks your path! It brandishes a crude dagger and snarls at you.",
       choices: [
         {
-          text: "Enter the final chamber",
-          nextPageId: 6,
-          conditions: { items: ["ancient_key"] }
+          text: "Fight the Goblin",
+          combat: { 
+            enemyId: "goblin",
+            winPageId: 5,
+            losePageId: 8
+          },
+          effects: { variables: { "defeated_goblin": true } }
         },
-        { text: "Return to entrance", nextPageId: 1 }
+        { text: "Flee back to entrance", nextPageId: 3, effects: { stats: { "health": -2 } } }
       ]
     },
     {
       id: 5,
       section: 1,
-      text: "The puzzle rejects your answer. The wall remains sealed.",
+      title: "Victory Over the Goblin",
+      text: "You have defeated the Cave Goblin! Among its possessions, you find an Ancient Key.",
+      effects: {
+        itemsAdd: ["ancient_key"]
+      },
       choices: [
-        { text: "Try again", nextPageId: 2 },
-        { text: "Leave", nextPageId: 1 }
+        { text: "Continue deeper", nextPageId: 6 },
+        { text: "Return to village to heal", nextPageId: 1 }
       ]
     },
     {
       id: 6,
+      section: 1,
+      title: "The Locked Door",
+      text: "You reach a massive iron door covered in ancient runes. It requires a key to open.",
+      choices: [
+        {
+          text: "Use the Ancient Key",
+          nextPageId: 7,
+          conditions: { items: ["ancient_key"] }
+        },
+        { text: "Go back", nextPageId: 3 }
+      ]
+    },
+    {
+      id: 7,
       section: 2,
-      text: "Using the Ancient Key, you unlock the final chamber. Inside lies the treasure of ages. You have completed the adventure!",
+      title: "The Dragon's Chamber",
+      text: "The door opens with a thunderous groan. Before you lies an enormous chamber filled with gold and treasure. In the center, coiled atop a mountain of coins, sleeps the Ancient Dragon.\n\nThe dragon stirs as you enter...",
+      choices: [
+        {
+          text: "Challenge the Dragon",
+          combat: { 
+            enemyId: "dragon",
+            winPageId: 9,
+            losePageId: 10
+          },
+          note: "This will be a difficult battle! Make sure you have enough health and attack power."
+        },
+        { text: "Retreat while you can", nextPageId: 6 }
+      ]
+    },
+    {
+      id: 8,
+      section: 1,
+      title: "Defeated by the Goblin",
+      text: "The goblin's blade finds its mark, and you fall to the cave floor. Darkness takes you...",
+      ending: { type: "soft" },
+      choices: []
+    },
+    {
+      id: 9,
+      section: 3,
+      title: "Dragon Slayer",
+      text: "Against all odds, you have slain the Ancient Dragon! Its scales shimmer as it falls, and you claim a single Dragon Scale as proof of your incredible victory.\n\nThe treasure is yours. You are now a legend!",
+      effects: {
+        itemsAdd: ["dragon_scale"],
+        stats: { "gold": 1000 }
+      },
       ending: { type: "hard" },
+      choices: []
+    },
+    {
+      id: 10,
+      section: 3,
+      title: "The Dragon's Wrath",
+      text: "The Ancient Dragon proves too powerful. Its flames consume you, and your adventure ends here in fire and ash...",
+      ending: { type: "soft" },
       choices: []
     }
   ]
@@ -237,18 +335,18 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
-        <Button onClick={() => navigate('/builder')} size="lg" className="gap-2">
-          <Hammer className="h-5 w-5" />
-          Story Builder
+    <div className="min-h-screen bg-background flex items-center justify-center p-2 sm:p-4">
+      <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
+        <Button onClick={() => navigate('/builder')} size="sm" className="gap-1 sm:gap-2 sm:text-base text-sm">
+          <Hammer className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="hidden xs:inline">Story </span>Builder
         </Button>
       </div>
       
-      <div className="w-full max-w-6xl space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-serif font-bold text-foreground">Interactive Gamebook</h1>
-          <p className="text-muted-foreground text-lg">Upload your story and begin your adventure</p>
+      <div className="w-full max-w-6xl space-y-4 sm:space-y-6">
+        <div className="text-center space-y-1 sm:space-y-2 pt-12 sm:pt-0">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-foreground">E-GameBook</h1>
+          <p className="text-muted-foreground text-sm sm:text-base md:text-lg">Upload your story and begin your adventure</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -268,15 +366,15 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-4 sm:p-8 text-center transition-colors ${
                   isDragging 
                     ? 'border-primary bg-primary/5' 
                     : 'border-muted-foreground/25 hover:border-primary/50'
                 }`}
               >
-                <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-foreground font-medium mb-2">Drag & drop your JSON file here</p>
-                <p className="text-muted-foreground text-sm mb-4">or</p>
+                <Upload className="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-muted-foreground mb-2 sm:mb-4" />
+                <p className="text-foreground font-medium mb-1 sm:mb-2 text-sm sm:text-base">Drag & drop your JSON file here</p>
+                <p className="text-muted-foreground text-xs sm:text-sm mb-2 sm:mb-4">or</p>
                 <label>
                   <input
                     type="file"
@@ -312,14 +410,14 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
                 </Alert>
               )}
 
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={downloadTemplate} className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="secondary" onClick={downloadTemplate} className="flex-1 text-sm sm:text-base">
                   <Download className="h-4 w-4 mr-2" />
-                  Download Template
+                  <span className="hidden sm:inline">Download </span>Template
                 </Button>
-                <Button variant="default" onClick={loadSampleStory} className="flex-1">
+                <Button variant="default" onClick={loadSampleStory} className="flex-1 text-sm sm:text-base">
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Try Sample Story
+                  <span className="hidden sm:inline">Try </span>Sample Story
                 </Button>
               </div>
             </CardContent>

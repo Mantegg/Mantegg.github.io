@@ -41,18 +41,18 @@ const Index = () => {
   } = useGamebook();
 
   const handleLoadStory = (data: any) => {
-    console.log('handleLoadStory called');
+    console.log('Loading story:', data.meta?.title);
     loadStory(data);
-    setShowSaveLoadScreen(true); // Show save/load screen after loading story
-    console.log('showSaveLoadScreen set to true');
+    setShowSaveLoadScreen(true);
   };
 
-  console.log('Index render:', { 
-    isPlaying, 
-    hasGamebookData: !!gamebookData, 
+  console.log('Index.tsx render state:', {
+    isPlaying,
+    hasGamebook: !!gamebookData,
     showSaveLoadScreen,
-    historyLength: gameState.history.length,
-    isCharacterSetupComplete: gameState.isCharacterSetupComplete
+    isCharacterSetupComplete: gameState.isCharacterSetupComplete,
+    currentPageId: gameState.currentPageId,
+    historyLength: gameState.history.length
   });
 
   if (!isPlaying || !gamebookData) {
@@ -63,8 +63,7 @@ const Index = () => {
     );
   }
 
-  // Show save/load selection screen after story is loaded but before starting
-  // This should appear before character creation
+  // Show save/load selection screen after story is loaded
   if (showSaveLoadScreen) {
     return (
       <ThemeProvider>
@@ -72,6 +71,7 @@ const Index = () => {
           gamebookData={gamebookData}
           onStartNew={() => setShowSaveLoadScreen(false)}
           onLoadSave={(state) => {
+            console.log('Loading save state:', state);
             loadGameState(state);
             setShowSaveLoadScreen(false);
           }}

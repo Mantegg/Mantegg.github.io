@@ -1,0 +1,371 @@
+{
+  "meta": {
+    "title": "Corazón de Fuego: A Tale of Love and Revenge",
+    "author": "EGameBook",
+    "version": "1.0.0",
+    "storyId": "telenovela-001",
+    "description": "A passionate tale of love, betrayal, and redemption in the mystical land of San Esperanza"
+  },
+  "themeConfig": {
+    "fontFamily": "Georgia, serif",
+    "backgroundImage": "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920"
+  },
+  "characterSetup": {
+    "namePrompt": "Enter your character's name",
+    "initialStats": {
+      "health": 20,
+      "charm": 10,
+      "courage": 8,
+      "gold": 50
+    },
+    "startingInventory": ["family_locket", "old_letter"]
+  },
+  "stats": [
+    { "name": "health", "label": "Health", "icon": "❤️" },
+    { "name": "charm", "label": "Charm", "icon": "✨" },
+    { "name": "courage", "label": "Courage", "icon": "⚔️" },
+    { "name": "gold", "label": "Gold", "icon": "💰" }
+  ],
+  "items": [
+    {
+      "id": "family_locket",
+      "name": "Family Locket",
+      "description": "A silver locket with your mother's portrait. The last thing she gave you before... that night.",
+      "icon": "📿"
+    },
+    {
+      "id": "old_letter",
+      "name": "Mysterious Letter",
+      "description": "A worn letter that speaks of a hidden treasure and a great betrayal.",
+      "icon": "📜"
+    },
+    {
+      "id": "rose_perfume",
+      "name": "Rose Perfume",
+      "description": "An enchanting fragrance that increases your charm.",
+      "icon": "🌹",
+      "consumable": true,
+      "effects": { "stats": { "charm": 5 } }
+    },
+    {
+      "id": "healing_tonic",
+      "name": "Healing Tonic",
+      "description": "A potent elixir that restores your vitality.",
+      "icon": "🧪",
+      "consumable": true,
+      "effects": { "stats": { "health": 10 } }
+    },
+    {
+      "id": "silver_dagger",
+      "name": "Silver Dagger",
+      "description": "A beautifully crafted dagger, perfect for self-defense.",
+      "icon": "🗡️",
+      "effects": { "stats": { "courage": 5 } }
+    },
+    {
+      "id": "manuel_gift",
+      "name": "Manuel's Handkerchief",
+      "description": "A silk handkerchief given to you by Manuel, still carrying his cologne.",
+      "icon": "🤍"
+    },
+    {
+      "id": "rosa_blessing",
+      "name": "Rosa's Blessing",
+      "description": "A mystical charm from the fortune teller Rosa. It glows with an inner light.",
+      "icon": "✨"
+    },
+    {
+      "id": "treasure_map",
+      "name": "Treasure Map Fragment",
+      "description": "Part of a map showing the location of the lost treasure of San Esperanza.",
+      "icon": "🗺️"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "bandit_leader",
+      "name": "El Serpiente",
+      "description": "The notorious bandit leader who terrorizes the mountain roads. His eyes are as cold as his blade is sharp.",
+      "icon": "🦹",
+      "health": 15,
+      "attack": 6,
+      "flavor": "\"Your journey ends here, little one. That treasure belongs to me!\""
+    },
+    {
+      "id": "jealous_rival",
+      "name": "Isabella la Cruel",
+      "description": "Your former friend, now consumed by jealousy and rage. She will stop at nothing to have what you possess.",
+      "icon": "👸",
+      "health": 12,
+      "attack": 5,
+      "flavor": "\"You took everything from me! Now I'll take everything from you!\""
+    },
+    {
+      "id": "corrupted_guard",
+      "name": "Capitán Mendoza",
+      "description": "Once an honorable guard captain, now corrupted by greed and working for the mysterious Don Rodrigo.",
+      "icon": "🛡️",
+      "health": 18,
+      "attack": 7,
+      "flavor": "\"I'm sorry, but Don Rodrigo pays better than honor ever did.\""
+    }
+  ],
+  "sections": [
+    { "id": 0, "name": "The Beginning" },
+    { "id": 1, "name": "The Journey" },
+    { "id": 2, "name": "The Revelation" },
+    { "id": 3, "name": "The Climax" }
+  ],
+  "pages": [
+    {
+      "id": 1,
+      "section": 0,
+      "title": "The Storm of Destiny",
+      "text": "The rain pounds against the cobblestones of Plaza San Esperanza as you stand before the gates of the De La Cruz estate, your heart heavy with memories and determination. Twenty years ago, your mother disappeared from this very place under mysterious circumstances, leaving behind only whispers of betrayal and a cryptic letter that has haunted your dreams.\n\nTonight, clutching that faded letter in your trembling hands, you've finally gathered the courage to return. The mansion looms before you like a sleeping giant, its windows dark except for a single flickering candle in the tower—the very room where your mother was last seen alive.\n\nThe letter speaks of a hidden treasure, a terrible secret, and a love that transcended death itself. Your mother's final words echo in your mind: \"Follow your heart, my darling, for it knows the way when the mind is lost in shadows.\"\n\nAs lightning illuminates the night sky, you see a figure watching you from the shadows near the fountain. Your hand instinctively moves to the family locket around your neck, its weight a comforting reminder of who you are and why you're here.\n\nThe storm intensifies, as if the very heavens are warning you to turn back. But you've come too far to retreat now. Your destiny awaits, written in the rain and thunder of this fateful night.",
+      "choices": [
+        { 
+          "text": "Approach the mysterious figure by the fountain",
+          "nextPageId": 2,
+          "note": "Perhaps they know something about your mother..."
+        },
+        {
+          "text": "Head directly to the mansion's main entrance",
+          "nextPageId": 3,
+          "note": "Time to confront the past head-on"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "section": 0,
+      "title": "The Stranger in the Rain",
+      "text": "As you approach the fountain, the figure steps into the dim lamplight, revealing a man of striking features—dark eyes that seem to hold a thousand untold stories, and a scar running down his left cheek that only adds to his mysterious allure. He's dressed in the clothing of a wanderer, yet carries himself with the grace of nobility.\n\n\"I've been expecting you,\" he says softly, his voice barely audible above the storm. \"Though I prayed you would never come. This place... it devours the innocent and corrupts the pure. Your mother learned that too late.\"\n\nYour heart races. \"You knew my mother? Tell me what happened to her!\"\n\nHe reaches into his coat and produces a small, weathered photograph—and your breath catches. It shows your mother, young and radiant, standing beside this very same man, though he appears unchanged by the passage of time. On the back, written in your mother's hand: \"Manuel, my eternal love, my impossible choice.\"\n\n\"My name is Manuel de la Noche,\" he says, his eyes glistening with unshed tears. \"And I loved your mother with every fiber of my being. But there are forces in this place, ancient and cruel, that tear lovers apart. The treasure you seek is real, but the price... the price is always higher than one expects.\"\n\nHe hands you the photograph and a small vial. \"This is a healing tonic. You'll need it for what lies ahead. The merchant Rosa has set up shop in the old chapel—she can provide you with other necessities. But please, I beg you, reconsider this path.\"\n\nLightning strikes nearby, and when you look up again, Manuel has vanished into the storm like a ghost, leaving only his words echoing in your mind.",
+      "effects": {
+        "itemsAdd": ["healing_tonic", "manuel_gift"],
+        "variables": { "met_manuel": true }
+      },
+      "choices": [
+        {
+          "text": "Visit Rosa's shop in the old chapel",
+          "nextPageId": 4,
+          "note": "You'll need supplies for the journey ahead"
+        },
+        {
+          "text": "Proceed directly to the mansion",
+          "nextPageId": 5,
+          "note": "Every moment counts. The answers await inside."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "section": 0,
+      "title": "The Iron Gates",
+      "text": "You walk past the fountain, ignoring the mysterious figure, your determination unwavering. The mansion's iron gates stand before you, ornate and foreboding, adorned with the De La Cruz family crest—a rose entwined with a serpent.\n\nAs you push against the gates, they creak open with surprising ease, as if welcoming you home. Or perhaps, into a trap. The courtyard beyond is overgrown with wild roses, their thorns glinting like tiny daggers in the lightning's flash. The scent is intoxicating yet somehow sinister.\n\nSuddenly, you hear footsteps behind you. The figure from the fountain has followed you.\n\n\"Stubborn, just like your mother,\" a deep voice says. \"But stubbornness won't protect you from what lurks in the shadows of this cursed place. At least let me offer you this—a warning and a gift.\"\n\nHe presses something into your hand—a healing tonic—before disappearing back into the storm. You notice a piece of paper tied to the bottle: \"Rosa's Chapel - Supplies for the Brave or Foolish.\"\n\nThe mansion door stands before you now, its knocker shaped like a crying angel.",
+      "effects": {
+        "itemsAdd": ["healing_tonic"],
+        "variables": { "met_manuel": false }
+      },
+      "choices": [
+        {
+          "text": "Visit Rosa's Chapel first",
+          "nextPageId": 4,
+          "note": "Preparation might save your life"
+        },
+        {
+          "text": "Enter the mansion immediately",
+          "nextPageId": 5,
+          "note": "Your courage burns too bright to wait"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "section": 1,
+      "title": "Rosa's Mystical Emporium",
+      "text": "The old chapel has been transformed into a merchant's haven, glowing with candlelight and filled with the scent of incense and exotic herbs. Silk curtains in deep crimson and gold divide the space, creating an intimate atmosphere that's both welcoming and mysterious.\n\nBehind a counter adorned with crystals and tarot cards sits Rosa—an elderly woman with eyes that seem to see into your very soul. Her silver hair is adorned with flowers, and her numerous rings catch the candlelight as she gestures for you to come closer.\n\n\"Ah, the daughter returns,\" she says, her voice like honey mixed with smoke. \"I read the cards this morning, and they spoke of your coming. The Tower, the Lovers, and Death—a powerful trinity. You walk a dangerous path, child, but perhaps not an impossible one.\"\n\nShe spreads various items across her counter: perfumes that promise enhanced charm, tonics for healing, a beautiful silver dagger that gleams with an inner light.\n\n\"Your gold is good here, but know this—some things cannot be bought, only earned through courage and sacrifice. Choose wisely, for each item may mean the difference between triumph and tragedy.\"\n\nShe leans forward, her voice dropping to a whisper. \"And if you're brave enough to ask, I could read your fortune. Though sometimes, knowing the future is a heavier burden than facing it blind.\"",
+      "shop": {
+        "currency": "gold",
+        "items": [
+          { "itemId": "healing_tonic", "price": 15, "quantity": 3 },
+          { "itemId": "rose_perfume", "price": 20, "quantity": 2 },
+          { "itemId": "silver_dagger", "price": 30, "quantity": 1 }
+        ]
+      },
+      "choices": [
+        {
+          "text": "Ask Rosa to read your fortune",
+          "nextPageId": 6,
+          "conditions": { "stats": { "gold": 10 } },
+          "effects": { 
+            "stats": { "gold": -10 },
+            "itemsAdd": ["rosa_blessing"],
+            "variables": { "fortune_read": true }
+          },
+          "note": "Cost: 10 gold - Learn what the cards reveal"
+        },
+        {
+          "text": "Thank Rosa and head to the mansion",
+          "nextPageId": 5,
+          "note": "You have what you need"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "section": 1,
+      "title": "The Fortune Teller's Vision",
+      "text": "Rosa's gnarled hands shuffle the ancient tarot deck with practiced ease, the cards whispering secrets as they move. She spreads them before you in a pattern resembling a star, each card face-down, pulsing with mysterious energy.\n\n\"The cards are eager to speak,\" she murmurs, turning over the first card. \"The Fool—you stand at the beginning of a great journey, innocent yet brave. But see here...\" She reveals the second card. \"The Five of Swords. Betrayal surrounds you. Someone close to the truth will try to lead you astray.\"\n\nThe third card makes her pause, her breath catching. \"The Lovers, reversed. A choice between love and duty, between heart and justice. Your mother faced this same choice, and her decision echoes through time.\"\n\nAs she reveals the final cards, her expression grows grave. \"The Tower and Death, but—\" her face suddenly brightens, \"—followed by The Star. Destruction and rebirth. You will lose something precious, face a terrible trial, but from the ashes, hope will emerge.\"\n\nShe presses a small crystal charm into your hand—it glows with a soft, warm light. \"This is my blessing, child. When the darkness feels overwhelming, hold this close. It contains a fragment of hope, and sometimes, that's all we need to find our way.\"\n\nRosa's eyes meet yours, filled with both sadness and pride. \"Your mother would be proud of your courage. Now go, before the night grows darker still.\"",
+      "choices": [
+        {
+          "text": "Proceed to the mansion",
+          "nextPageId": 5,
+          "note": "Armed with knowledge and courage"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "section": 1,
+      "title": "Across the Threshold",
+      "text": "The mansion's great door swings open at your touch, revealing a grand entrance hall frozen in time. Crystal chandeliers, now dusty and dim, hang from the vaulted ceiling. Portraits of the De La Cruz family line the walls, their painted eyes seeming to follow your every movement.\n\nAs you step inside, the door slams shut behind you with a thunderous boom that echoes through the empty halls. Your heart races, but you press forward, guided by the faint light emanating from the tower—your mother's last known location.\n\nThe grand staircase before you splits into two paths: one leading to the east wing, where the family's private chambers once hosted secrets and scandals; the other to the west wing, home to the library that supposedly contains records of every De La Cruz transaction, legal or otherwise.\n\nSuddenly, you hear a woman's laughter—cold, bitter, and far too close. From the shadows of the east wing emerges a figure you never thought you'd see again: Isabella, your childhood friend, now dressed in expensive silks and dripping with jewels.\n\n\"Well, well,\" she purrs, her voice laced with venom. \"Little orphan has finally come home. Did you really think you could waltz in here and claim what's mine? This mansion, this treasure, this life—it all belongs to me now. I've worked too hard, sacrificed too much, to let you ruin everything!\"\n\nHer eyes, once warm and friendly, now burn with jealous fury. She draws a pistol from her gown, her hand trembling with rage.",
+      "effects": {
+        "variables": { "isabella_confrontation": true }
+      },
+      "choices": [
+        {
+          "text": "Try to reason with Isabella, appeal to your past friendship",
+          "nextPageId": 7,
+          "conditions": { "stats": { "charm": 12 } },
+          "note": "Requires Charm 12+ to touch her heart"
+        },
+        {
+          "text": "Challenge Isabella to a confrontation",
+          "nextPageId": 8,
+          "note": "Sometimes words fail, and action speaks"
+        },
+        {
+          "text": "Flee to the library while she's distracted",
+          "nextPageId": 9,
+          "effects": { "stats": { "health": -3 } },
+          "note": "You'll take damage, but escape"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "section": 1,
+      "title": "The Power of Memory",
+      "text": "\"Isabella,\" you say softly, taking a step forward despite the weapon pointed at your heart. \"Do you remember the summer we were twelve? When we made a pact under the old oak tree? We promised to always be there for each other, no matter what storms life brought.\"\n\nYou see her hand waver slightly, a flicker of doubt crossing her face.\n\n\"I remember,\" you continue, your voice gentle but firm, \"how you held me when I cried about my mother. How you swore you'd help me find the truth someday. That wasn't a lie, was it? That friendship—it was real.\"\n\nA tear rolls down Isabella's cheek, and the gun lowers slightly. \"Everything changed when he came,\" she whispers. \"Don Rodrigo promised me everything—wealth, status, love. But the price was... I had to forget. Forget who I was. Forget you.\"\n\n\"Then remember now,\" you plead, showing her the family locket. \"My mother believed in the power of love and friendship. She believed some bonds can never truly break. Please, Isabella. Help me find the truth. We can face Don Rodrigo together.\"\n\nThe pistol clatters to the marble floor. Isabella collapses, sobbing. \"What have I become? What have I done?\"\n\nShe reaches into her dress and pulls out a small, ornate key. \"The tower,\" she gasps. \"The answers you seek are in the tower. But be warned—Don Rodrigo has stationed his most ruthless guard there. Capitán Mendoza won't hesitate to kill.\"\n\nShe presses the key into your hand. \"Go. Quickly. Before I lose my courage and before Rodrigo discovers I've betrayed him. And... I'm sorry. For everything.\"",
+      "effects": {
+        "itemsAdd": ["treasure_map"],
+        "variables": { "isabella_redeemed": true },
+        "stats": { "courage": 2 }
+      },
+      "choices": [
+        {
+          "text": "Head to the tower to confront Capitán Mendoza",
+          "nextPageId": 10,
+          "note": "The final truth awaits"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "section": 1,
+      "title": "Clash of Destinies",
+      "text": "\"I won't let jealousy and greed turn you into a monster, Isabella,\" you declare, your courage burning bright. \"If you want to stop me, you'll have to face me properly—not hide behind a weapon like a coward!\"\n\nIsabella's face contorts with rage and pain. \"You always thought you were better than me! Always the noble one, the pure one! Well, let's see how noble you are when I'm done with you!\"\n\nShe drops the pistol and draws a wicked-looking dagger, its blade glinting with poisoned edges. The air crackles with tension as you both circle each other in the grand hall, the portraits of the De La Cruz ancestors bearing silent witness to this tragic confrontation between former friends.",
+      "choices": [
+        {
+          "text": "Face Isabella in combat",
+          "combat": {
+            "enemyId": "jealous_rival",
+            "winPageId": 11,
+            "losePageId": 12
+          },
+          "note": "A battle between past friends"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "section": 2,
+      "title": "Reluctant Victory",
+      "text": "Isabella falls to her knees, defeated but alive. Blood trickles from a cut on her arm, and her expensive gown is torn and dusty. But more than physical wounds, you can see the emotional devastation in her eyes—the realization of how far she'd fallen.\n\n\"Finish it,\" she whispers hoarsely. \"I deserve no mercy.\"\n\nBut you lower your weapon, extending your hand instead. \"No, Isabella. This isn't who we are. This isn't who we were meant to become.\"\n\nShe looks at your offered hand in disbelief, tears streaming down her face. After a long moment, she takes it, allowing you to help her to her feet.\n\n\"Why?\" she asks, her voice breaking. \"After everything I tried to do...\"\n\n\"Because my mother taught me that mercy is stronger than revenge,\" you reply softly. \"And because somewhere beneath all this darkness, my friend still exists.\"\n\nIsabella pulls a key from her pocket with trembling hands. \"The tower. That's where Rodrigo keeps his secrets—and where you'll find the truth about your mother. But Capitán Mendoza guards it. He's dangerous, completely loyal to Rodrigo, and he won't be swayed by words or mercy.\"\n\nShe presses the key into your palm. \"Go. End this nightmare. And maybe... maybe someday I can become someone worthy of the friendship you've shown me tonight.\"",
+      "effects": {
+        "itemsAdd": ["treasure_map"],
+        "variables": { "isabella_defeated": true },
+        "stats": { "courage": 3 }
+      },
+      "choices": [
+        {
+          "text": "Ascend to the tower",
+          "nextPageId": 10,
+          "note": "Face the final guardian"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "section": 2,
+      "title": "Darkness Falls",
+      "text": "Isabella's blade finds its mark, and you collapse to the cold marble floor, your vision blurring. Through the haze of pain, you see her standing over you, the dagger falling from her trembling hand.\n\n\"What have I done?\" she whispers, her voice filled with horror. \"What have I become?\"\n\nAs consciousness fades, you hear her screaming for help, calling your name with desperate anguish. Perhaps, in this moment of tragedy, she's finally remembered who she truly is.\n\nBut for you, the quest ends here, in the mansion that claimed your mother and now claims you as well. Some mysteries are destined to remain unsolved, some treasures forever lost.\n\nYour last thought, as darkness takes you, is of your mother's face, and a hope that somewhere, somehow, she'll understand that you tried.",
+      "ending": { "type": "soft" },
+      "choices": []
+    },
+    {
+      "id": 9,
+      "section": 1,
+      "title": "The Library of Secrets",
+      "text": "You dart past Isabella as she fires, the bullet grazing your shoulder. Pain flares, but adrenaline drives you forward, through the dust-covered corridors until you burst into the mansion's vast library.\n\nFloor-to-ceiling shelves groan under the weight of countless books and documents. The smell of aged paper and leather fills your nostrils as you press your hand against your wounded shoulder, trying to stem the bleeding.\n\nQuickly scanning the room, your eyes fall upon a desk where recent disturbance has cleared away decades of dust. Documents are spread across its surface—and your breath catches as you recognize your mother's handwriting.\n\nA journal lies open, its pages yellowed but readable:\n\n\"Tonight I learned the terrible truth about the De La Cruz fortune. It was built on stolen treasures, on lives destroyed, on a darkness that spans generations. Don Rodrigo threatened my child if I revealed this secret. So I hid evidence throughout this mansion, fragments of a map that leads to both the treasure and the proof of his crimes.\n\nMy beloved Manuel begged me to run away with him, to leave all this behind. But how can I? My daughter deserves to know the truth. She deserves justice. Even if I must sacrifice everything...\"\n\nThe entry ends abruptly, as if she was interrupted. Beneath it, you find a fragment of a map—a piece of the puzzle you've been seeking.",
+      "effects": {
+        "itemsAdd": ["treasure_map"],
+        "variables": { "found_journal": true }
+      },
+      "choices": [
+        {
+          "text": "Continue to the tower",
+          "nextPageId": 10,
+          "note": "The truth awaits above"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "section": 2,
+      "title": "The Tower Guardian",
+      "text": "The spiral staircase seems to climb forever, each step taking you higher into the mansion's ancient tower. The storm rages outside the narrow windows, lightning illuminating your path in brilliant, intermittent flashes.\n\nAt the top, before a heavy wooden door, stands Capitán Mendoza. Once, he was known as the most honorable guard in San Esperanza. Now, dressed in armor that's seen too many dark deeds, he blocks your path with a massive sword drawn.\n\n\"I knew someone would come eventually,\" he says, his voice heavy with resignation and something else—regret? \"Your mother was a brave woman. Too brave. She wouldn't stop asking questions, wouldn't accept the lies we fed her.\"\n\n\"You were there that night,\" you breathe, realization dawning. \"You know what happened to her.\"\n\n\"I know many things I wish I didn't,\" Mendoza replies, his grip tightening on his sword. \"And I've done many things I can never undo. Don Rodrigo pays well, but some coins are stained with blood that never washes clean.\"\n\nHe raises his weapon, but you see the conflict in his eyes—a man torn between honor lost and honor that might still be reclaimed.\n\n\"Your mother... she understood something important. Sometimes the truth is worth more than life itself. I couldn't save her then, but perhaps I can honor her memory now by giving you a fighting chance.\"\n\nThe lightning crashes, and Capitán Mendoza takes a battle stance. \"Show me you have your mother's courage. Show me you're worthy of the truth that lies beyond this door!\"",
+      "choices": [
+        {
+          "text": "Fight Capitán Mendoza",
+          "combat": {
+            "enemyId": "corrupted_guard",
+            "winPageId": 13,
+            "losePageId": 14
+          },
+          "note": "The final battle for truth"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "section": 3,
+      "title": "The Truth Revealed",
+      "text": "Mendoza's sword clatters to the stone floor as he sinks to one knee, defeated but not dishonored. Blood seeps from his wounds, but there's a strange peace in his eyes—the peace of a man who's finally made the right choice.\n\n\"You have her strength,\" he gasps, a sad smile crossing his face. \"Go. The truth is behind that door. And when you find it...\" he presses a sealed letter into your hand, \"...deliver this to the authorities. It's my confession—everything Rodrigo did, everything I helped him do. Let it be my penance.\"\n\nHe slumps against the wall, his breathing labored but steady. \"Your mother... she didn't die that night. Rodrigo thought he'd killed her, but Manuel—that mysterious stranger you might have met—he saved her at the last moment. She's been hiding, waiting for someone to finish what she started. The candle in the window... it's been her signal all these years.\"\n\nYour heart soars with hope even as your hands tremble. You push open the tower door, and there, illuminated by candlelight, stands a woman whose face you've only known from faded photographs—older now, marked by years of hiding and waiting, but unmistakably alive.\n\n\"My darling child,\" your mother whispers, tears streaming down her face. \"You came. You were brave enough to seek the truth, strong enough to overcome every obstacle. Come here, let me look at you.\"\n\nShe embraces you, and in that moment, twenty years of pain and longing melt away. Behind her, you see the evidence she's compiled—documents proving Don Rodrigo's crimes, the location of treasures stolen from countless families, enough to bring justice to San Esperanza at last.\n\n\"Manuel has been my guardian angel all these years,\" she explains through tears of joy. \"And now, together, we can finally expose the darkness and bring light back to this place. You've done it, my brave child. You've completed what I started. The treasure isn't gold or jewels—it's truth, justice, and the love that never died.\"\n\nAs dawn breaks over San Esperanza, washing away the storm, you stand with your mother, ready to face a new day and a brighter future.",
+      "effects": {
+        "stats": { "gold": 100 },
+        "variables": { "true_ending": true }
+      },
+      "ending": { "type": "hard" },
+      "choices": []
+    },
+    {
+      "id": 14,
+      "section": 3,
+      "title": "Fallen but Not Forgotten",
+      "text": "Capitán Mendoza's blade strikes true, and you fall, your vision fading as the storm continues to rage outside. Your last sight is of the tower door—so close, yet forever out of reach.\n\nAs darkness claims you, Mendoza kneels beside you, his face twisted with anguish. \"Forgive me,\" he whispers. \"Another soul lost to Rodrigo's greed. Another light extinguished.\"\n\nBut in your final moments, you feel no regret. You came seeking truth, and though you didn't live to unveil it, your courage has planted seeds. Mendoza will remember your bravery. Isabella will remember your mercy. Rosa will remember your determination.\n\nSometimes, the hero's journey doesn't end in triumph, but in inspiration for those who follow. Your story becomes legend in San Esperanza—a tale of courage and love that eventually brings others to finish what you started.\n\nIn the end, perhaps that's its own kind of victory.",
+      "ending": { "type": "soft" },
+      "choices": []
+    }
+  ]
+}

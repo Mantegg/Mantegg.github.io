@@ -59,11 +59,16 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat, o
     return { id: itemId, name: itemId, visible: true };
   };
 
-  // Filter visible items
-  const visibleItems = inventory.filter(itemId => {
+  // Filter visible items and group by itemId with counts
+  const visibleItemCounts = inventory.reduce((acc, itemId) => {
     const info = getItemInfo(itemId);
-    return info.visible;
-  });
+    if (info.visible) {
+      acc[itemId] = (acc[itemId] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+  
+  const visibleItems = Object.keys(visibleItemCounts);
 
   const getItemBadgeVariant = (type?: string): "default" | "secondary" | "outline" => {
     switch (type) {
@@ -194,6 +199,7 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat, o
               {visibleItems.map((itemId) => {
                 const info = getItemInfo(itemId);
                 const isConsumable = info.type === 'consumable';
+                const quantity = visibleItemCounts[itemId];
                 
                 return (
                   <Tooltip key={itemId}>
@@ -211,6 +217,7 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat, o
                         >
                           {isConsumable && <Pill className="w-3 h-3 mr-1" />}
                           {info.name}
+                          {quantity > 1 && <span className="ml-1 opacity-70">×{quantity}</span>}
                         </Badge>
                       </div>
                     </TooltipTrigger>
@@ -277,25 +284,27 @@ export function InventoryPanel({ inventory, stats, gamebookData, onUpdateStat, o
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Use {itemToConsume?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {itemToConsume?.description || 'Are you sure you want to consume this item?'}
-              {itemToConsume?.effects && (
-                <div className="mt-3 p-3 bg-muted rounded text-sm space-y-1">
-                  <p className="font-medium">Effects:</p>
-                  {itemToConsume.effects.stats && (
-                    <div>
-                      {Object.entries(itemToConsume.effects.stats).map(([stat, value]) => (
-                        <div key={stat}>
-                          {stat}: {value > 0 ? '+' : ''}{value}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {itemToConsume.effects.itemsAdd && (
-                    <div>Adds items: {itemToConsume.effects.itemsAdd.join(', ')}</div>
-                  )}
-                </div>
-              )}
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>{itemToConsume?.description || 'Are you sure you want to consume this item?'}</p>
+                {itemToConsume?.effects && (
+                  <div className="p-3 bg-muted rounded text-sm space-y-1">
+                    <p className="font-medium">Effects:</p>
+                    {itemToConsume.effects.stats && (
+                      <div>
+                        {Object.entries(itemToConsume.effects.stats).map(([stat, value]) => (
+                          <div key={stat}>
+                            {stat}: {value > 0 ? '+' : ''}{value}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {itemToConsume.effects.itemsAdd && (
+                      <div>Adds items: {itemToConsume.effects.itemsAdd.join(', ')}</div>
+                    )}
+                  </div>
+                )}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
