@@ -7,7 +7,7 @@ import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const Index = () => {
-  const [showSaveLoadScreen, setShowSaveLoadScreen] = useState(true);
+  const [showSaveLoadScreen, setShowSaveLoadScreen] = useState(false);
   
   const {
     gamebookData,
@@ -40,22 +40,38 @@ const Index = () => {
     loadGameState,
   } = useGamebook();
 
+  const handleLoadStory = (data: any) => {
+    console.log('Loading story:', data.meta?.title);
+    loadStory(data);
+    setShowSaveLoadScreen(true);
+  };
+
+  console.log('Index.tsx render state:', {
+    isPlaying,
+    hasGamebook: !!gamebookData,
+    showSaveLoadScreen,
+    isCharacterSetupComplete: gameState.isCharacterSetupComplete,
+    currentPageId: gameState.currentPageId,
+    historyLength: gameState.history.length
+  });
+
   if (!isPlaying || !gamebookData) {
     return (
       <ThemeProvider>
-        <WelcomeScreen onLoadStory={loadStory} />
+        <WelcomeScreen onLoadStory={handleLoadStory} />
       </ThemeProvider>
     );
   }
 
-  // Show save/load selection screen after story is loaded but before starting
-  if (!gameState.isCharacterSetupComplete && gameState.history.length === 0 && showSaveLoadScreen) {
+  // Show save/load selection screen after story is loaded
+  if (showSaveLoadScreen) {
     return (
       <ThemeProvider>
         <SaveLoadStartScreen
           gamebookData={gamebookData}
           onStartNew={() => setShowSaveLoadScreen(false)}
           onLoadSave={(state) => {
+            console.log('Loading save state:', state);
             loadGameState(state);
             setShowSaveLoadScreen(false);
           }}

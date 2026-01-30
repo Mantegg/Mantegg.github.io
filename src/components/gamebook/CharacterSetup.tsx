@@ -136,28 +136,28 @@ export function CharacterSetup({ gamebookData, onComplete }: CharacterSetupProps
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-serif font-bold text-foreground">{title}</h1>
+    <div className="min-h-screen bg-background flex items-center justify-center p-2 sm:p-4">
+      <div className="w-full max-w-2xl space-y-4 sm:space-y-6">
+        <div className="text-center space-y-1 sm:space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-serif font-bold text-foreground">{title}</h1>
           {author && (
-            <p className="text-muted-foreground">by {author}</p>
+            <p className="text-muted-foreground text-sm sm:text-base">by {author}</p>
           )}
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+          <CardHeader className="space-y-1 pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <User className="h-4 w-4 sm:h-5 sm:w-5" />
               Create Your Character
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm">
               {creationMode === 'sliders' && 'Customize your character stats'}
               {creationMode === 'profiles' && 'Choose a character profile'}
               {creationMode === 'both' && 'Choose a profile or customize your stats'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 sm:space-y-6">
             {/* Player Name */}
             {allowCustomName && (
               <div className="space-y-2">

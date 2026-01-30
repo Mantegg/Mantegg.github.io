@@ -33,7 +33,6 @@ export function ShopPanel({
   const shopStock = shopInventories[pageIdStr] || {};
 
   const canAfford = (price: number) => playerCurrency >= price;
-  const alreadyOwns = (itemId: string) => playerInventory.includes(itemId);
   const getStock = (itemId: string, originalQty?: number) => {
     if (originalQty === undefined) return undefined; // Unlimited
     return shopStock[itemId] !== undefined ? shopStock[itemId] : originalQty;
@@ -57,7 +56,7 @@ export function ShopPanel({
             const item = getItemDetails(shopItem.itemId);
             const stock = getStock(shopItem.itemId, shopItem.quantity);
             const isOutOfStock = stock !== undefined && stock <= 0;
-            const canBuy = canAfford(shopItem.price) && !alreadyOwns(shopItem.itemId) && !isOutOfStock;
+            const canBuy = canAfford(shopItem.price) && !isOutOfStock;
 
             return (
               <TooltipProvider key={shopItem.itemId}>
@@ -95,9 +94,7 @@ export function ShopPanel({
                     </div>
                   </div>
                   <div>
-                    {alreadyOwns(shopItem.itemId) ? (
-                      <Badge variant="secondary">Owned</Badge>
-                    ) : isOutOfStock ? (
+                    {isOutOfStock ? (
                       <Badge variant="destructive">Out of Stock</Badge>
                     ) : (
                       <Button
