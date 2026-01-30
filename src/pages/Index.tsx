@@ -7,7 +7,7 @@ import { CharacterSetup } from '@/components/gamebook/CharacterSetup';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 const Index = () => {
-  const [showSaveLoadScreen, setShowSaveLoadScreen] = useState(true);
+  const [showSaveLoadScreen, setShowSaveLoadScreen] = useState(false);
   
   const {
     gamebookData,
@@ -40,16 +40,32 @@ const Index = () => {
     loadGameState,
   } = useGamebook();
 
+  const handleLoadStory = (data: any) => {
+    console.log('handleLoadStory called');
+    loadStory(data);
+    setShowSaveLoadScreen(true); // Show save/load screen after loading story
+    console.log('showSaveLoadScreen set to true');
+  };
+
+  console.log('Index render:', { 
+    isPlaying, 
+    hasGamebookData: !!gamebookData, 
+    showSaveLoadScreen,
+    historyLength: gameState.history.length,
+    isCharacterSetupComplete: gameState.isCharacterSetupComplete
+  });
+
   if (!isPlaying || !gamebookData) {
     return (
       <ThemeProvider>
-        <WelcomeScreen onLoadStory={loadStory} />
+        <WelcomeScreen onLoadStory={handleLoadStory} />
       </ThemeProvider>
     );
   }
 
   // Show save/load selection screen after story is loaded but before starting
-  if (!gameState.isCharacterSetupComplete && gameState.history.length === 0 && showSaveLoadScreen) {
+  // This should appear before character creation
+  if (showSaveLoadScreen) {
     return (
       <ThemeProvider>
         <SaveLoadStartScreen

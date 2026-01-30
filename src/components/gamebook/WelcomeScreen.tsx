@@ -174,7 +174,10 @@ export function WelcomeScreen({ onLoadStory }: WelcomeScreenProps) {
         }
 
         console.log('Loading gamebook:', gamebookData.meta?.title);
+        console.log('About to call onLoadStory with:', gamebookData);
+        console.log('onLoadStory function:', onLoadStory);
         onLoadStory(gamebookData);
+        console.log('onLoadStory called successfully');
       } catch (err) {
         console.error('Unexpected error:', err);
         setError('An unexpected error occurred while processing the file.');
